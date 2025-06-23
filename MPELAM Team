@@ -874,6 +874,7 @@ if not na(save_top_liq)
 // Inizializzazione dei breakout alla prima esecuzione, deve essere aggiustato, in questo momento rileva falsi break quando l'ancoraggio è avvenuto su supporto old o resistenza old 
 [old_top, old_bot, current_res, current_sup] = M.breakout(top, actual_old_resistenza, actual_resistenza, bot, actual_old_supporto, actual_supporto)
 var int bar_breakout = 0 
+var int bar_breakout_down = 0 
 
 if barstate.islastconfirmedhistory 
     if current_res == actual_old_resistenza
@@ -881,8 +882,13 @@ if barstate.islastconfirmedhistory
     if current_res == actual_resistenza
         bar_breakout := res_switch_bar
     bar_breakout := bar_index - bar_breakout
+if barstate.islastconfirmedhistory 
+    if current_res == actual_old_supporto
+        bar_breakout_down := support_switch_bar_old
+    if current_res == actual_supporto
+        bar_breakout_down := support_switch_bar
+    bar_breakout_down := bar_index - bar_breakout_down
 //
-plot(bar_breakout)
 if barstate.islastconfirmedhistory 
     if top > current_res
         up_breakout                     := true 
@@ -3346,6 +3352,11 @@ if barstate.islastconfirmedhistory
             up_breakout                     := false 
             bot_in_up_break_out             := na
             distanza_break_out_up           := na
+    for i = 1 to bar_breakout
+        if high > poc_level
+            down_breakout                   := false 
+            top_in_down_break_out           := na
+            distanza_break_out_down         := na
 
 // -------------------------------------}
 
