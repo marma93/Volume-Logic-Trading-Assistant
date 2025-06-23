@@ -486,10 +486,10 @@ var int lenght_pivot_order_block = timeframe_level > 0 ? 1 : 2
 
 [spread, n_titoli, titolo] = M.title_spread_n_titoli_function(counting)
 //
-var float moltiplicatore_break  = timeframe_level == 1 ? 1 : timeframe_level == 2  ? 1 : timeframe_level > 2  ? 1 : 1 
-var float moltiplicatore_mid    = timeframe_level == 1 ? 1 : timeframe_level == 2  ? 1 : timeframe_level > 2  ? 2 : 1 
-var float moltiplicatore_bot    = timeframe_level == 1 ? 1 : timeframe_level == 2  ? 2 : timeframe_level > 2  ? 2 : 1 
-var float moltiplicatore_cover  = timeframe_level == 1 ? 2 : timeframe_level == 2  ? 2 : timeframe_level > 2  ? 2 : 1 
+var float moltiplicatore_break  = timeframe_level == 1 ? 1 : timeframe_level == 2  ? 2 : timeframe_level > 2  ? 2 : 1 
+var float moltiplicatore_mid    = timeframe_level == 1 ? 2 : timeframe_level == 2  ? 2 : timeframe_level > 2  ? 3 : 2 
+var float moltiplicatore_bot    = timeframe_level == 1 ? 2 : timeframe_level == 2  ? 2 : timeframe_level > 2  ? 2 : 1 
+var float moltiplicatore_cover  = timeframe_level == 1 ? 2 : timeframe_level == 2  ? 2 : timeframe_level > 2  ? 2 : 2 
 
 var float  n_titoli_moltiplicatore_break = na
 var float  n_titoli_moltiplicatore_mid   = na
