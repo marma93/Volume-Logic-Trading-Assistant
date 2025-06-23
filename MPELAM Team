@@ -28,7 +28,7 @@ indicator('Volume Logic Trading Assistant', max_bars_back = 5000,max_boxes_count
 // Starter Pack
 // -----------------------------------------------------------{
 
-import MPELAM/Definitive_Library/25 as M 
+import MPELAM/Definitive_Library/27 as M 
 var int counting = 0
 
 // Var
@@ -487,9 +487,9 @@ var int lenght_pivot_order_block = timeframe_level > 0 ? 1 : 2
 [spread, n_titoli, titolo] = M.title_spread_n_titoli_function(counting)
 //
 var float moltiplicatore_break  = timeframe_level == 1 ? 1 : timeframe_level == 2  ? 2 : timeframe_level > 2  ? 2 : 1 
-var float moltiplicatore_mid    = timeframe_level == 1 ? 2 : timeframe_level == 2  ? 2 : timeframe_level > 2  ? 3 : 2 
-var float moltiplicatore_bot    = timeframe_level == 1 ? 2 : timeframe_level == 2  ? 2 : timeframe_level > 2  ? 2 : 1 
-var float moltiplicatore_cover  = timeframe_level == 1 ? 2 : timeframe_level == 2  ? 2 : timeframe_level > 2  ? 2 : 2 
+var float moltiplicatore_mid    = timeframe_level == 1 ? 2 : timeframe_level == 3  ? 2 : timeframe_level > 2  ? 3 : 2 
+var float moltiplicatore_bot    = timeframe_level == 1 ? 2 : timeframe_level == 2  ? 2 : timeframe_level > 2  ? 3 : 1 
+var float moltiplicatore_cover  = timeframe_level == 1 ? 2 : timeframe_level == 3  ? 2 : timeframe_level > 2  ? 3 : 2 
 
 var float  n_titoli_moltiplicatore_break = na
 var float  n_titoli_moltiplicatore_mid   = na
@@ -873,7 +873,16 @@ if not na(save_top_liq)
 
 // Inizializzazione dei breakout alla prima esecuzione, deve essere aggiustato, in questo momento rileva falsi break quando l'ancoraggio è avvenuto su supporto old o resistenza old 
 [old_top, old_bot, current_res, current_sup] = M.breakout(top, actual_old_resistenza, actual_resistenza, bot, actual_old_supporto, actual_supporto)
+var int bar_breakout = 0 
 
+if barstate.islastconfirmedhistory 
+    if current_res == actual_old_resistenza
+        bar_breakout := res_switch_bar_old
+    if current_res == actual_resistenza
+        bar_breakout := res_switch_bar
+    bar_breakout := bar_index - bar_breakout
+//
+plot(bar_breakout)
 if barstate.islastconfirmedhistory 
     if top > current_res
         up_breakout                     := true 
@@ -3331,6 +3340,13 @@ tot_position := tot_position_cover + open_position_break + tot_position_scenario
 if counting < 1
     counting += 1
 //
+if barstate.islastconfirmedhistory
+    for i = 1 to bar_breakout
+        if low < poc_level
+            up_breakout                     := false 
+            bot_in_up_break_out             := na
+            distanza_break_out_up           := na
+
 // -------------------------------------}
 
 // Tabella
