@@ -2973,16 +2973,18 @@ top_vol_ratio                           = vah_to_top_volume_perc / (100 - vah_pe
 
 // Aggiustamento inizializzazione breakout
 if barstate.islastconfirmedhistory
-    for i = 1 to bar_breakout
-        if low[i] < poc_level
-            up_breakout                     := false 
-            bot_in_up_break_out             := na
-            distanza_break_out_up           := na
-    for i = 1 to bar_breakout_down
-        if high[i] > poc_level
-            down_breakout                   := false 
-            top_in_down_break_out           := na
-            distanza_break_out_down         := na
+    if up_breakout
+        for i = 1 to bar_breakout
+            if low[i] < poc_level
+                up_breakout                     := false 
+                bot_in_up_break_out             := na
+                distanza_break_out_up           := na
+    if down_breakout
+        for i = 1 to bar_breakout_down
+            if high[i] > poc_level
+                down_breakout                   := false 
+                top_in_down_break_out           := na
+                distanza_break_out_down         := na
 //
 
 if run > 0 
