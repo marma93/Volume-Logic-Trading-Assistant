@@ -28,7 +28,7 @@ indicator('Volume Logic Trading Assistant', max_bars_back = 5000,max_boxes_count
 // Starter Pack
 // -----------------------------------------------------------{
 
-import MPELAM/Definitive_Library/27 as M 
+import MPELAM/Definitive_Library/28 as M 
 var int counting = 0
 
 // Var
@@ -3369,7 +3369,7 @@ low_cover_level = tot_sup == 4 ? old_sup_3 : tot_sup == 3 ? old_sup_2 : tot_sup 
 diff_percentage = 100 - (((low_cover_level / close ) * 100))
 
 // Tabella unificata ottimizzata
-M.tabella(percent_change, real_pearson, volume_dispersion, bbars, market, market_buy_pattern, block_start_bar, diff_percentage, bot, top, bot_is_sup, top_is_res, tot_sup, tot_res, titolo, spread, n_titoli, vix, status, col, headerColor, positiveColor, negativeColor, show_plot, run)
+M.tabella(percent_change, real_pearson, volume_dispersion, market, market_buy_pattern, diff_percentage, bot, top, bot_is_sup, top_is_res, tot_sup, tot_res, titolo, spread, status, headerColor, positiveColor, negativeColor, show_plot, run)
 
 //if run > 1 and bbars < bbars[1]
 //    alert("Correct Reset",alert.freq_once_per_bar)
