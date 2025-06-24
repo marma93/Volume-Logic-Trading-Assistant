@@ -28,7 +28,7 @@ indicator('Volume Logic Trading Assistant', max_bars_back = 5000,max_boxes_count
 // Starter Pack
 // -----------------------------------------------------------{
 
-import MPELAM/Definitive_Library/28 as M 
+import MPELAM/Definitive_Library/29 as M 
 var int counting = 0
 
 // Var
@@ -39,7 +39,7 @@ var int counting = 0
 // ═══════════════════════════════════════════════════════════════════════════════════════
 var string current_timeframe             = timeframe.period                                  // Timeframe corrente
 
-timeframe_level = M.timeframe_level_function(current_timeframe)
+var timeframe_level = M.timeframe_level_function(current_timeframe)
  
 var int lenght_ema = current_timeframe == "S" or current_timeframe == "1S" or current_timeframe == "5S" or current_timeframe == "10S" or current_timeframe == "15S" or current_timeframe == "30S" ? 13 : current_timeframe == "45S" or current_timeframe == "1" or current_timeframe == "1m" or current_timeframe == "2" or current_timeframe == "2m" ? 11 : current_timeframe == "3" or current_timeframe == "3m" or current_timeframe == "5" or current_timeframe == "5m" or current_timeframe == "10" or current_timeframe == "10m" ? 7 : current_timeframe == "15" or current_timeframe == "15m" or current_timeframe == "30" or current_timeframe == "30m" or current_timeframe == "45" or current_timeframe == "45m" ? 5 : current_timeframe == "60" or current_timeframe == "1H" or current_timeframe == "1h" or current_timeframe == "120" or current_timeframe == "2H" or current_timeframe == "2h" or current_timeframe == "180" or current_timeframe == "3H" or current_timeframe == "3h" or current_timeframe == "240" or current_timeframe == "4H" or current_timeframe == "4h" or current_timeframe == "360" or current_timeframe == "6H" or current_timeframe == "6h" or current_timeframe == "480" or current_timeframe == "8H" or current_timeframe == "8h" or current_timeframe == "720" or current_timeframe == "12H" or current_timeframe == "12h" ? 3 : current_timeframe == "D" or current_timeframe == "1D" or current_timeframe == "d" or current_timeframe == "W" or current_timeframe == "1W" or current_timeframe == "w" or current_timeframe == "M" or current_timeframe == "1M" ? 2 : -99
 
@@ -65,7 +65,7 @@ var int cnum                             = 100                                  
 // ═══════════════════════════════════════════════════════════════════════════════════════
 // GESTIONE SPREAD E ASSET
 // ═══════════════════════════════════════════════════════════════════════════════════════
-var float min_0_3                        = close / 100 * 0.2                                // Distanza minima posizioni cover
+var float min_0_3                        = timeframe_level <= 1 ? close / 100 * 0.2 : close /100 * 1                       // Distanza minima posizioni cover
 
 // ═══════════════════════════════════════════════════════════════════════════════════════
 // PERCENTILI VIX E SENTIMENT
@@ -262,9 +262,9 @@ var label vol_break_down_perc_mom_label  = na                                   
 // LINEAR REGRESSION E TREND
 // ═══════════════════════════════════════════════════════════════════════════════════════
 var float lr_vol_perc                    = na                                               // Percentuale volume linear regression
-var bool useUpperDevInput_lr             = true                                             // Flag deviazione superiore LR
 var float upperMultInput_lr              = 2                                                // Moltiplicatore deviazione superiore
-var bool useLowerDevInput_lr             = true                                             // Flag deviazione inferiore LR
+var useUpperDevInput_lr = input.bool(true, "Usa Deviazione Superiore LR", group="Impostazioni LR")
+var useLowerDevInput_lr = input.bool(true, "Usa Deviazione Inferiore LR", group="Impostazioni LR")
 var float lowerMultInput_lr              = 2                                                // Moltiplicatore deviazione inferiore
 var bool showPearsonInput_lr             = true                                             // Flag visualizzazione Pearson
 var bool extendLeftInput_lr              = false                                            // Flag estensione sinistra LR
@@ -3224,7 +3224,7 @@ if (run > 0 and barstate.isconfirmed) or run == 1
                  and (na(break_start_perc) or (not na(break_start_perc) and vah_perc   < (break_start_perc - (min_level[1] / 2))))
                 market_buy_pattern          := "Bot Compression" , start_perc := vah_perc
             if market_buy_pattern == "Pendant Study" and poc_is_in_buy
-                 and (na(break_start_perc) or (not na(break_start_perc) and poc_perc   < (break_start_perc - (min_level[1] / 2)))) and poc_perc < 50
+                 and (na(break_start_perc) or (not na(break_start_perc) and poc_perc   < (break_start_perc - (min_level[1] / 2)))) and poc_perc < fib_for_break
                 market_buy_pattern          := "Poc" , start_perc := poc_perc
             if market_buy_pattern == "Pendant Study" and val_is_in_buy
                  and (na(break_start_perc) or (not na(break_start_perc) and val_perc   < (break_start_perc - (min_level[1] / 2))))
