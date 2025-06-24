@@ -894,11 +894,21 @@ if barstate.islastconfirmedhistory
         up_breakout                     := true 
         bot_in_up_break_out             := bot
         distanza_break_out_up           := current_res - bot_in_up_break_out
+        iterazione_break = bar_breakout
+        for i = 1 to iterazione_break
+            if high[i] == top
+                bar_breakout := bar_index - bar_index[i] - 1
+                break
     //
     if bot < current_sup
         down_breakout                   := true 
         top_in_down_break_out           := top
         distanza_break_out_down         := top_in_down_break_out - current_sup
+        iterazione_break_down = bar_breakout_down
+        for i = 1 to iterazione_break_down
+            if low[i] == bot
+                bar_breakout_down := bar_index - bar_index[i] - 1
+                break
 //
 
 // Funzione per gestire la pulizia delle label
@@ -2961,6 +2971,20 @@ bot_vol_ratio                           = val_to_bot_volume_perc / val_perc
 mid_vol_ratio                           = central_volume_perc / vol_distance_perc
 top_vol_ratio                           = vah_to_top_volume_perc / (100 - vah_perc)
 
+// Aggiustamento inizializzazione breakout
+if barstate.islastconfirmedhistory
+    for i = 1 to bar_breakout
+        if low[i] < poc_level
+            up_breakout                     := false 
+            bot_in_up_break_out             := na
+            distanza_break_out_up           := na
+    for i = 1 to bar_breakout_down
+        if high[i] > poc_level
+            down_breakout                   := false 
+            top_in_down_break_out           := na
+            distanza_break_out_down         := na
+//
+
 if run > 0 
     //Sezione bot
     if val_perc <= 5
@@ -3346,17 +3370,6 @@ tot_position := tot_position_cover + open_position_break + tot_position_scenario
 if counting < 1
     counting += 1
 //
-if barstate.islastconfirmedhistory
-    for i = 1 to bar_breakout
-        if low < poc_level
-            up_breakout                     := false 
-            bot_in_up_break_out             := na
-            distanza_break_out_up           := na
-    for i = 1 to bar_breakout
-        if high > poc_level
-            down_breakout                   := false 
-            top_in_down_break_out           := na
-            distanza_break_out_down         := na
 
 // -------------------------------------}
 
@@ -3378,5 +3391,3 @@ if run == 2 and bbars == bar_limit
     run += 1
 
 // -------------------------------------}
-
-
