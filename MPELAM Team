@@ -632,9 +632,10 @@ high_perc := math.ceil(((high - bot) / global_distance) * 100)
     //Iterazione scalare per il sistema cover
 [tot_sup, old_sup, old_sup_1, old_sup_2, old_sup_3, tot_res, old_res, old_res_1, old_res_2, old_res_3] = M2.scalare_sistema_cover(barstate.islastconfirmedhistory, a_sup, a_res, bot_is_sup, bot, piv_distance, piv_distance_1, piv_distance_2, piv_distance_3, top, piv_distance_1_res, piv_distance_2_res, piv_distance_3_res)
 if barstate.islastconfirmedhistory
-    fib_for_break := na(old_res) ? fib_perc_4 : fib_perc_5
-    fib_for_scenario := sentiment_level < 7 ? fib_perc_3 : fib_perc_4
-    fib_for_scenario_low := sentiment_level < 7 ? fib_perc_3 : fib_perc_4
+    fib_for_break := timeframe_level < 2 ? (na(old_res) ? fib_perc_4 : fib_perc_5) : fib_perc_5
+    fib_for_scenario := timeframe_level < 2 ? (sentiment_level < 7 ? fib_perc_3 : fib_perc_4) : (sentiment_level < 7 ? fib_perc_4 : fib_perc_5)
+    fib_for_scenario_low := sentiment_level < 7 ? fib_perc_3 : fib_perc_4        
+//
 // ----------------------------------------}
     // Gestione Breakout
 // -----------------------------------------------------------{
@@ -2584,9 +2585,9 @@ if run > 0 and (contatore + bbars) >= bar_limit and block_start_bar and na(save_
 tot_position := tot_position_cover + open_position_break + tot_position_scenario_bot + open_position_mid
 //Determino il livello di fib da accettare in base al timeframe_level
 if barstate.isconfirmed
-    fib_for_break := na(old_res) ? fib_perc_4 : fib_perc_5
-    fib_for_scenario := sentiment_level < 7 ? fib_perc_3 : fib_perc_4
-    fib_for_scenario_low := sentiment_level < 7 ? fib_perc_3 : fib_perc_4        
+    fib_for_break := timeframe_level < 2 ? (na(old_res) ? fib_perc_4 : fib_perc_5) : fib_perc_5
+    fib_for_scenario := timeframe_level < 2 ? (sentiment_level < 7 ? fib_perc_3 : fib_perc_4) : (sentiment_level < 7 ? fib_perc_4 : fib_perc_5)
+    fib_for_scenario_low := sentiment_level < 7 ? fib_perc_3 : fib_perc_4               
     //
     counting := counting < 1 ? counting + 1 : counting
 //
