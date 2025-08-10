@@ -1,7 +1,7 @@
 //@version=5
 indicator('Volume Logic Trading Assistant (Buy)', max_bars_back = 5000,max_boxes_count=200, overlay = false)
  
-// MPELAM 2025 
+// MPELAM 2025 - manuelmarmaglio@gmail.com
 //  ⚡ Volume Logic Trading Assistant ⚡
 
 // Licenza: GNU General Public License v3+
