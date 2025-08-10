@@ -1,5 +1,5 @@
 //@version=5
-indicator('Volume Logic Trading Assistant', max_bars_back = 5000,max_boxes_count=200, overlay = false)
+indicator('Volume Logic Trading Assistant (Buy)', max_bars_back = 5000,max_boxes_count=200, overlay = false)
  
 // MPELAM 2025 
 //  ⚡ Volume Logic Trading Assistant ⚡
@@ -12,7 +12,7 @@ indicator('Volume Logic Trading Assistant', max_bars_back = 5000,max_boxes_count
 
 // Var & Library 
 // -----------------------------------------------------------{
-import MPELAM/Logic_Trade_Bot_Library_penny/24 as M2  
+import MPELAM/Logic_Trade_Bot_Library_BUY/1 as M2  
     // TIMEFRAME E ANALISI TEMPORALE
 // ═══════════════════════════════════════════════════════════════════════════════════════{
 var string current_timeframe = timeframe.period
@@ -635,7 +635,7 @@ if barstate.islastconfirmedhistory
     fib_for_break := timeframe_level < 2 ? (na(old_res) ? fib_perc_4 : fib_perc_5) : fib_perc_5
     fib_for_scenario := timeframe_level < 2 ? (sentiment_level < 7 ? fib_perc_3 : fib_perc_4) : (sentiment_level < 7 ? fib_perc_4 : fib_perc_5)
     fib_for_scenario_low := sentiment_level < 7 ? fib_perc_3 : fib_perc_4        
-//
+
 // ----------------------------------------}
     // Gestione Breakout
 // -----------------------------------------------------------{
@@ -995,7 +995,7 @@ if barstate.islast and run > 0
         n_posizione := 13
         alert(str.format("{0} \"data\": {1} \"secret\": \"\", \"timeframe\": \"{2}\", \"real\": {3}, \"action\": \"{4}\", \"id\": \"{5}\", \"timenow\": {6}, \"data\": {7} 
          \"epic\": \"{8}\", \"direction\": \"{9}\", \"size\": {10} {11} {12} {13}", "{", "{", current_timeframe, "true", "OPEN", str.tostring(n_posizione), 
-         str.tostring(timenow), "{", titolo, "BUY", n_titoli_moltiplicatore_break, "}", "}", "}"), alert.freq_once_per_bar)
+         str.tostring(timenow), "{", titolo, "BUY", n_titoli_moltiplicatore_mid, "}", "}", "}"), alert.freq_once_per_bar)
     if close_12
         n_posizione := 12
         alert(str.format("{0} \"data\": {1} \"secret\": \"\", \"timeframe\": \"{2}\", \"real\": {3}, \"action\": \"{4}\", \"id\": \"{5}\", \"timenow\":{6}, 
@@ -2246,8 +2246,8 @@ var bool scenario_actual_over_bot_pattern = false
 // Market analisi 
 // -----------------------------------------------------------{
 // Analisi generale di mercato 
+var bool figura_val_to_bot_target = false 
 if (run > 0 and barstate.isconfirmed) or (run > 0 and barstate.islastconfirmedhistory)
-    var bool figura_val_to_bot_target = false 
     //Dichiarazione di bool persistenti
     var bool figura_val_to_bot_target_low = false 
     var bool figura_poc_to_bot_target = false 
@@ -2308,7 +2308,7 @@ if (run > 0 and barstate.isconfirmed) or (run > 0 and barstate.islastconfirmedhi
         //Definizione delle figure scenario under LR
         figura_poc_2_to_bot_target = break_control_poc_2 and poc_2_is_ready and (poc_2_perc > bot_liq_perc or (poc_2_perc < bot_liq_perc and not bot_liq_is_in_buy))
 
-        figura_poc_2_to_bot_target_over_poc  := figura_poc_2_to_bot_target and poc_second_level > poc_level and poc_2_to_poc_vol_ratio > 50
+        figura_poc_2_to_bot_target_over_poc  := figura_poc_2_to_bot_target and poc_second_level > poc_level
         figura_vah_to_bot_target    := break_control_vah   and vah_is_ready and vah_perc > bot_liq_perc and not figura_poc_2_to_bot_target_over_poc 
         figura_poc_to_bot_target    := break_control_poc   and poc_is_ready and poc_perc > bot_liq_perc and not figura_poc_2_to_bot_target_over_poc and not figura_vah_to_bot_target 
         figura_val_to_bot_target    := break_control_val   and val_is_ready and (val_perc > bot_liq_perc or (val_perc < bot_liq_perc and not bot_liq_is_in_buy)) and not figura_poc_to_bot_target and not figura_poc_2_to_bot_target_over_poc and not figura_vah_to_bot_target
@@ -2358,7 +2358,7 @@ if (run > 0 and barstate.isconfirmed) or (run > 0 and barstate.islastconfirmedhi
         val_is_ready_low   = val_perc   <= lr_perc and val_perc   <= fib_for_scenario_low  
         poc_2_is_ready_low = poc_2_perc <= lr_perc and poc_2_perc <= fib_for_scenario_low 
         figura_poc_2_to_bot_target_low = break_control_poc_2 and poc_2_is_ready_low and (poc_2_perc > bot_liq_perc or (poc_2_perc < bot_liq_perc and not bot_liq_is_in_buy))  
-        figura_poc_2_to_bot_target_low_over_poc     := figura_poc_2_to_bot_target_low and poc_second_level > poc_level and poc_2_to_poc_vol_ratio > 50
+        figura_poc_2_to_bot_target_low_over_poc     := figura_poc_2_to_bot_target_low and poc_second_level > poc_level
         figura_vah_to_bot_target_low    := break_control_vah and vah_is_ready_low and vah_perc > bot_liq_perc and not figura_poc_2_to_bot_target_low_over_poc 
         figura_poc_to_bot_target_low    := break_control_poc and poc_is_ready_low and poc_perc > bot_liq_perc and not figura_poc_2_to_bot_target_low_over_poc and not figura_vah_to_bot_target_low 
         figura_val_to_bot_target_low    := break_control_val and val_is_ready_low and (val_perc > bot_liq_perc or (val_perc < bot_liq_perc and not bot_liq_is_in_buy)) and not figura_poc_to_bot_target_low and not figura_poc_to_bot_target_low and not figura_poc_2_to_bot_target_low_over_poc and not figura_vah_to_bot_target_low
@@ -2367,7 +2367,7 @@ if (run > 0 and barstate.isconfirmed) or (run > 0 and barstate.islastconfirmedhi
         figura_bot_low                 := not figura_vah_to_bot_target_low and not figura_val_to_bot_target_low and not figura_poc_to_bot_target_low and not figura_poc_2_to_bot_target_low_over_poc and not figura_poc_2_to_bot_target_low_under_poc and not figura_bot_liq_low
         if (low_level > lowerEndPrice_lr or (market == "Switch Up Trend" and not trend_up and pearson < 0.5)) //Ricerca di scenari più bassi quando il poc è compreso nella lr
             if not up_breakout or open_position_break > 0
-                if figura_bot_liq_low
+                if figura_bot_low
                     market_buy_pattern := "Bot Buy Fig", start_perc := 0, target_buy_perc := start_perc
                 //Poc 2
                 if market_buy_pattern != "Poc 2 Buy Fig" and figura_poc_2_to_bot_target_low_over_poc
@@ -2435,8 +2435,9 @@ actual_supporto_poc_perc := _actual_supporto_poc_perc
 target_buy_perc := _target_buy_perc
 market_buy_pattern := _market_buy_pattern
 old_res_perc = math.round(((old_res - bot) / global_distance) * 100)
+old_sup_perc = math.round(((old_sup - bot) / global_distance) * 100)
 
-actual_supporto_poc_level := M2.get_level_from_perc(actual_supporto_poc_perc, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+actual_supporto_poc_level := M2.get_level_from_perc(actual_supporto_poc_perc, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
 
 scenario_actual_bot_line := line.new(x1 = support_switch_bar, y1 = actual_supporto_poc_level, x2 = bar_index, y2 = actual_supporto_poc_level, color = color.yellow, width = 1, force_overlay = true)    
 //
@@ -2491,45 +2492,45 @@ array.clear(orig_perc_array)
 orig_perc_array := M2.populate_orig_perc_array(bot_liq_perc, val_perc, poc_perc, vah_perc, top_liq_perc, poc_2_perc, peak_level_perc)
 //
 [lower_target_simulato, higher_target_simulato] = M2.calculate_target_percentages(orig_perc_array, target_buy_perc, sentiment_level, timeframe_level, fib_perc_1, fib_perc_2, fib_perc_3, fib_perc_4, fib_perc_5, fib_perc_6, break_with_res, old_res_perc)
-simulato_level = M2.get_level_from_perc(target_buy_perc, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
-simulato_lower_target_tupla   = M2.get_level_from_perc(lower_target_simulato, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
-simulato_higher_target_tupla := M2.get_level_from_perc(higher_target_simulato, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+simulato_level = M2.get_level_from_perc(target_buy_perc, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+simulato_lower_target_tupla   = M2.get_level_from_perc(lower_target_simulato, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+simulato_higher_target_tupla := M2.get_level_from_perc(higher_target_simulato, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
 simulato_higher_target_tupla := simulato_break and low_perc_fib == 5 and not na(old_res) ? old_res : simulato_higher_target_tupla
 //Target break 
 [break_lower_target_perc_tupla, break_higher_target_perc_tupla] = M2.calculate_target_percentages(orig_perc_array, break_ask_perc, sentiment_level, timeframe_level, fib_perc_1, fib_perc_2, fib_perc_3, fib_perc_4, fib_perc_5, fib_perc_6, break_with_res, old_res_perc)
-break_lower_target_tupla  = M2.get_level_from_perc(break_lower_target_perc_tupla, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
-break_higher_target_tupla = M2.get_level_from_perc(break_higher_target_perc_tupla,old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+break_lower_target_tupla  = M2.get_level_from_perc(break_lower_target_perc_tupla, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+break_higher_target_tupla = M2.get_level_from_perc(break_higher_target_perc_tupla, old_sup_perc, old_sup, top, bot,old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
 //Target Siffredi
 [siffredi_lower_target_perc_tupla, siffredi_higher_target_perc_tupla] = M2.calculate_target_percentages(orig_perc_array, siffredi_ask_perc, sentiment_level, timeframe_level, fib_perc_1, fib_perc_2, fib_perc_3, fib_perc_4, fib_perc_5, fib_perc_6, break_with_res, old_res_perc)
-siffredi_lower_target_tupla  = M2.get_level_from_perc(siffredi_lower_target_perc_tupla, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
-siffredi_higher_target_tupla = M2.get_level_from_perc(siffredi_higher_target_perc_tupla,old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+siffredi_lower_target_tupla  = M2.get_level_from_perc(siffredi_lower_target_perc_tupla, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+siffredi_higher_target_tupla = M2.get_level_from_perc(siffredi_higher_target_perc_tupla, old_sup_perc, old_sup, top, bot,old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
 // Target del livello bot liq posizione 1-2
 [lower_target_bot_perc_tupla, higher_target_bot_perc_tupla] = M2.calculate_target_percentages(orig_perc_array, bot_liq_perc_used, sentiment_level, timeframe_level, fib_perc_1, fib_perc_2, fib_perc_3, fib_perc_4, fib_perc_5, fib_perc_6, break_with_res, old_res_perc)
-lower_target_bot_tupla  = M2.get_level_from_perc(lower_target_bot_perc_tupla,  old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
-higher_target_bot_tupla = M2.get_level_from_perc(higher_target_bot_perc_tupla, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+lower_target_bot_tupla  = M2.get_level_from_perc(lower_target_bot_perc_tupla, old_sup_perc, old_sup, top, bot,  old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+higher_target_bot_tupla = M2.get_level_from_perc(higher_target_bot_perc_tupla, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
 // Target per posizione 11 actual over bot 
 [lower_target_act_sup_over_bot_perc_tupla, higher_target_act_sup_over_bot_perc_tupla] = M2.calculate_target_percentages(orig_perc_array, actual_supporto_poc_perc, sentiment_level, timeframe_level, fib_perc_1, fib_perc_2, fib_perc_3, fib_perc_4, fib_perc_5, fib_perc_6, break_with_res, old_res_perc)
-lower_target_act_sup_over_bot_tupla = M2.get_level_from_perc(lower_target_act_sup_over_bot_perc_tupla, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+lower_target_act_sup_over_bot_tupla = M2.get_level_from_perc(lower_target_act_sup_over_bot_perc_tupla, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
 //Target per posizioni MID 12
 [mid_lower_target_perc_tupla, mid_higher_target_perc_tupla] = M2.calculate_target_percentages(orig_perc_array, save_start_perc, sentiment_level, timeframe_level, fib_perc_1, fib_perc_2, fib_perc_3, fib_perc_4, fib_perc_5, fib_perc_6, break_with_res, old_res_perc)
-mid_lower_target_tupla  = M2.get_level_from_perc(mid_lower_target_perc_tupla,  old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
-mid_higher_target_tupla = M2.get_level_from_perc(mid_higher_target_perc_tupla, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+mid_lower_target_tupla  = M2.get_level_from_perc(mid_lower_target_perc_tupla, old_sup_perc, old_sup, top, bot,  old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+mid_higher_target_tupla = M2.get_level_from_perc(mid_higher_target_perc_tupla, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
 //Target per posizioni Cover 1
 [cover_1_lower_target_perc_tupla, cover_1_higher_target_perc_tupla] = M2.calculate_target_percentages(orig_perc_array, cover_1_ask_perc, sentiment_level, timeframe_level, fib_perc_1, fib_perc_2, fib_perc_3, fib_perc_4, fib_perc_5, fib_perc_6, break_with_res, old_res_perc)
-cover_1_lower_target_tupla  = M2.get_level_from_perc(cover_1_lower_target_perc_tupla,  old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
-cover_1_higher_target_tupla = M2.get_level_from_perc(cover_1_higher_target_perc_tupla, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+cover_1_lower_target_tupla  = M2.get_level_from_perc(cover_1_lower_target_perc_tupla, old_sup_perc, old_sup, top, bot,  old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+cover_1_higher_target_tupla = M2.get_level_from_perc(cover_1_higher_target_perc_tupla, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
 //Target per posizioni Cover 2
 [cover_2_lower_target_perc_tupla, cover_2_higher_target_perc_tupla] = M2.calculate_target_percentages(orig_perc_array, cover_1_ask_perc, sentiment_level, timeframe_level, fib_perc_1, fib_perc_2, fib_perc_3, fib_perc_4, fib_perc_5, fib_perc_6, break_with_res, old_res_perc)
-cover_2_lower_target_tupla  = M2.get_level_from_perc(cover_2_lower_target_perc_tupla,  old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
-cover_2_higher_target_tupla = M2.get_level_from_perc(cover_2_higher_target_perc_tupla, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+cover_2_lower_target_tupla  = M2.get_level_from_perc(cover_2_lower_target_perc_tupla, old_sup_perc, old_sup, top, bot,  old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+cover_2_higher_target_tupla = M2.get_level_from_perc(cover_2_higher_target_perc_tupla, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
 //Target per posizioni Cover 3
 [cover_3_lower_target_perc_tupla, cover_3_higher_target_perc_tupla] = M2.calculate_target_percentages(orig_perc_array, cover_1_ask_perc, sentiment_level, timeframe_level, fib_perc_1, fib_perc_2, fib_perc_3, fib_perc_4, fib_perc_5, fib_perc_6, break_with_res, old_res_perc)
-cover_3_lower_target_tupla  = M2.get_level_from_perc(cover_3_lower_target_perc_tupla,  old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
-cover_3_higher_target_tupla = M2.get_level_from_perc(cover_3_higher_target_perc_tupla, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+cover_3_lower_target_tupla  = M2.get_level_from_perc(cover_3_lower_target_perc_tupla, old_sup_perc, old_sup, top, bot,  old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+cover_3_higher_target_tupla = M2.get_level_from_perc(cover_3_higher_target_perc_tupla, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
 //Target per posizioni Cover 4
 [cover_4_lower_target_perc_tupla, cover_4_higher_target_perc_tupla] = M2.calculate_target_percentages(orig_perc_array, cover_1_ask_perc, sentiment_level, timeframe_level, fib_perc_1, fib_perc_2, fib_perc_3, fib_perc_4, fib_perc_5, fib_perc_6, break_with_res, old_res_perc)
-cover_4_lower_target_tupla  = M2.get_level_from_perc(cover_4_lower_target_perc_tupla,  old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
-cover_4_higher_target_tupla = M2.get_level_from_perc(cover_4_higher_target_perc_tupla, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+cover_4_lower_target_tupla  = M2.get_level_from_perc(cover_4_lower_target_perc_tupla, old_sup_perc, old_sup, top, bot,  old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+cover_4_higher_target_tupla = M2.get_level_from_perc(cover_4_higher_target_perc_tupla, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
 
 if barstate.isconfirmed and run > 0 
     siffredi_lower_target               := siffredi_lower_target_tupla
@@ -2587,7 +2588,7 @@ tot_position := tot_position_cover + open_position_break + tot_position_scenario
 if barstate.isconfirmed
     fib_for_break := timeframe_level < 2 ? (na(old_res) ? fib_perc_4 : fib_perc_5) : fib_perc_5
     fib_for_scenario := timeframe_level < 2 ? (sentiment_level < 7 ? fib_perc_3 : fib_perc_4) : (sentiment_level < 7 ? fib_perc_4 : fib_perc_5)
-    fib_for_scenario_low := sentiment_level < 7 ? fib_perc_3 : fib_perc_4               
+    fib_for_scenario_low := sentiment_level < 7 ? fib_perc_3 : fib_perc_4        
     //
     counting := counting < 1 ? counting + 1 : counting
 //
@@ -2609,3 +2610,4 @@ run := run_result == 1 and barstate.isconfirmed ? run + 1 : run
 M2.tabella_completa(percent_change, real_pearson, costituzione_volume , market, market_buy_pattern, diff_percentage, bot, top, bot_is_sup, top_is_res,tot_sup, tot_res, titolo, spread, status_vix, headerColor, positiveColor, negativeColor, volume_ratio, spike_ratio, body_ratio,bbars, status_sdex)
 M2.drawArrowsAndTable(simulato_level, simulato_lower_target_tupla, simulato_higher_target_tupla, sentiment_level, market_buy_pattern)
 // -------------------------------------}
+
