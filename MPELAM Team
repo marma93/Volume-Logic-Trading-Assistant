@@ -12,7 +12,7 @@ indicator('Volume Logic Trading Assistant (Buy)', max_bars_back = 5000,max_boxes
 
 // Var & Library 
 // -----------------------------------------------------------{
-import MPELAM/Logic_Trade_Bot_Library_BUY/1 as M2  
+import MPELAM/Logic_Trade_Bot_Library_BUY/2 as M2  
     // TIMEFRAME E ANALISI TEMPORALE
 // ═══════════════════════════════════════════════════════════════════════════════════════{
 var string current_timeframe = timeframe.period
@@ -2249,6 +2249,8 @@ var bool scenario_actual_over_bot_pattern = false
 // Market analisi 
 // -----------------------------------------------------------{
 // Analisi generale di mercato 
+old_sup_perc = math.round(((old_sup - bot) / global_distance) * 100)
+
 var bool figura_val_to_bot_target = false 
 if (run > 0 and barstate.isconfirmed) or (run > 0 and barstate.islastconfirmedhistory)
     //Dichiarazione di bool persistenti
@@ -2319,7 +2321,7 @@ if (run > 0 and barstate.isconfirmed) or (run > 0 and barstate.islastconfirmedhi
         figura_bot_liq              := not figura_vah_to_bot_target and not figura_val_to_bot_target and not figura_poc_to_bot_target and not figura_poc_2_to_bot_target_over_poc and not figura_poc_2_to_bot_target_under_poc and bot_liq_is_in_buy
         figura_bot                  := not figura_vah_to_bot_target and not figura_val_to_bot_target and not figura_poc_to_bot_target and not figura_poc_2_to_bot_target_over_poc and not figura_poc_2_to_bot_target_under_poc and not figura_bot_liq
         if figura_bot
-            market_buy_pattern := "Bot Buy Fig", start_perc := 0, target_buy_perc := start_perc
+            market_buy_pattern := "Bot Buy Fig", start_perc := bot_is_sup ? 0 : old_sup_perc, target_buy_perc := start_perc
         if low_level <= lowerEndPrice_lr
             if not up_breakout or open_position_break > 0
                 //Poc 2
@@ -2349,7 +2351,7 @@ if (run > 0 and barstate.isconfirmed) or (run > 0 and barstate.islastconfirmedhi
                     market_buy_pattern := na, start_perc := na, target_buy_perc := na 
                 //Bot Liq
                 if market_buy_pattern != "Bot Liq Fig" and figura_bot_liq 
-                    market_buy_pattern := "Bot Liq Fig", target_buy_perc := bot_liq_perc
+                    market_buy_pattern := "Bot Liq Fig", target_buy_perc := bot_is_sup ? bot_liq_perc : old_sup_perc 
                 if market_buy_pattern == "Bot Liq Fig" and not figura_bot_liq
                     market_buy_pattern  := na, target_buy_perc := na 
             else 
@@ -2371,7 +2373,7 @@ if (run > 0 and barstate.isconfirmed) or (run > 0 and barstate.islastconfirmedhi
         if (low_level > lowerEndPrice_lr or (market == "Switch Up Trend" and not trend_up and pearson < 0.5)) //Ricerca di scenari più bassi quando il poc è compreso nella lr
             if not up_breakout or open_position_break > 0
                 if figura_bot_low
-                    market_buy_pattern := "Bot Buy Fig", start_perc := 0, target_buy_perc := start_perc
+                    market_buy_pattern := "Bot Buy Fig", start_perc := bot_is_sup ? 0 : old_sup_perc, target_buy_perc := start_perc
                 //Poc 2
                 if market_buy_pattern != "Poc 2 Buy Fig" and figura_poc_2_to_bot_target_low_over_poc
                     market_buy_pattern := "Poc 2 Buy Fig", start_perc := poc_2_perc , target_buy_perc := start_perc
@@ -2399,7 +2401,7 @@ if (run > 0 and barstate.isconfirmed) or (run > 0 and barstate.islastconfirmedhi
                     market_buy_pattern := na, start_perc := na, target_buy_perc := na 
                 //Bot Liq
                 if market_buy_pattern != "Bot Liq Fig" and figura_bot_liq_low
-                    market_buy_pattern := "Bot Liq Fig", target_buy_perc := bot_liq_perc
+                    market_buy_pattern := "Bot Liq Fig", target_buy_perc := bot_is_sup ? bot_liq_perc : old_sup_perc
                 if market_buy_pattern == "Bot Liq Fig" and not figura_bot_liq_low
                     market_buy_pattern  := na , target_buy_perc := na
             else 
@@ -2438,7 +2440,6 @@ actual_supporto_poc_perc := _actual_supporto_poc_perc
 target_buy_perc := _target_buy_perc
 market_buy_pattern := _market_buy_pattern
 old_res_perc = math.round(((old_res - bot) / global_distance) * 100)
-old_sup_perc = math.round(((old_sup - bot) / global_distance) * 100)
 
 actual_supporto_poc_level := M2.get_level_from_perc(actual_supporto_poc_perc, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
 
@@ -2489,7 +2490,7 @@ cover_4_ask      = not na(scenario_cover_4_ask_to_l) or not na(scenario_cover_4_
 cover_4_ask_perc = not na(scenario_cover_4_ask_to_l) or not na(scenario_cover_4_ask_to_h) ? math.round(((cover_4_ask - bot) / global_distance) * 100) : na
 //Livello di simulazione per gestione arrow
 simulato_break = (market_buy_pattern == "Poc Break" or market_buy_pattern == "Poc 2 Break" or market_buy_pattern == "Vah Break") ? true : false
-target_buy_perc := (na(target_buy_perc) or market_buy_pattern == "No Buy Pattern" ) ? 0 : target_buy_perc
+target_buy_perc := (na(target_buy_perc) or market_buy_pattern == "No Buy Pattern" ) ? old_sup_perc : target_buy_perc
 // Popolamento struttura vettoriale con parametrizzazione sequenziale dei livelli di target
 array.clear(orig_perc_array)
 orig_perc_array := M2.populate_orig_perc_array(bot_liq_perc, val_perc, poc_perc, vah_perc, top_liq_perc, poc_2_perc, peak_level_perc)
@@ -2613,5 +2614,6 @@ if barstate.isconfirmed and run > 0
 run_result = M2.check_alerts(run, bbars, bar_limit, poc_level, poc_level[1], bot_liq, timeframe_level, up_breakout, up_breakout[1], down_breakout, down_breakout[1], bot) 
 run := run_result == 1 and barstate.isconfirmed ? run + 1 : run 
 M2.tabella_completa(percent_change, real_pearson, costituzione_volume , market, market_buy_pattern, diff_percentage, bot, top, bot_is_sup, top_is_res,tot_sup, tot_res, titolo, spread, status_vix, headerColor, positiveColor, negativeColor, volume_ratio, spike_ratio, body_ratio,bbars, status_sdex)
-M2.drawArrowsAndTable(simulato_level, simulato_lower_target_tupla, simulato_higher_target_tupla, sentiment_level, market_buy_pattern)
+M2.drawArrowsAndTable(simulato_level, simulato_lower_target_tupla, simulato_higher_target_tupla, sentiment_level, market_buy_pattern, old_sup)
 // -------------------------------------}
+
