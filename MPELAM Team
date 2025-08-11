@@ -1,7 +1,7 @@
 //@version=5
 indicator('Volume Logic Trading Assistant (Buy)', max_bars_back = 5000,max_boxes_count=200, overlay = false)
  
-// MPELAM 2025 - manuelmarmaglio@gmail.com
+// MPELAM 2025 
 //  ⚡ Volume Logic Trading Assistant ⚡
 
 // Licenza: GNU General Public License v3+
@@ -754,7 +754,7 @@ check_peak_levels() =>
                 result := true
                 break
     result
-//
+
 var float scenario_siffredi_close_perc = na
 var float actual_supporto_poc_level = na 
 var int actual_supporto_poc_perc = na 
@@ -1476,7 +1476,10 @@ var float pearson_coeff_vol = na
 var int up_ar = na 
 var int down_ar = na  
 var volumes                             = array.new_float(cnum * 2, 0.)
-if (barstate.isconfirmed and run > 0 ) or (run == 0 and barstate.islastconfirmedhistory)
+var int start_bar = 0 
+if barstate.islastconfirmedhistory
+    start_bar := bar_index
+if (barstate.isconfirmed and run > 0 ) or (barstate.islastconfirmedhistory) or (bar_index > start_bar and barstate.isconfirmed and na(poc_level) and start_bar != 0)
     run := run < 2 ? run + 1 : run 
     volumes                            := array.new_float(cnum * 2, 0.)
     for bars = 0 to bbars - 1 by 1
@@ -2605,9 +2608,10 @@ low_cover_level = tot_sup == 4 ? old_sup_3 : tot_sup == 3 ? old_sup_2 : tot_sup 
 diff_percentage = 100 - (((low_cover_level / close ) * 100))
 // Tabella unificata ottimizzata
 run := run == 3 and bbars < bbars[1] ? 2 : run
+if barstate.isconfirmed and run > 0
+    label.new(bar_index, high, "R:" + str.tostring(run) + " P:" + str.tostring(poc_level), yloc=yloc.abovebar)
 run_result = M2.check_alerts(run, bbars, bar_limit, poc_level, poc_level[1], bot_liq, timeframe_level, up_breakout, up_breakout[1], down_breakout, down_breakout[1], bot) 
 run := run_result == 1 and barstate.isconfirmed ? run + 1 : run 
 M2.tabella_completa(percent_change, real_pearson, costituzione_volume , market, market_buy_pattern, diff_percentage, bot, top, bot_is_sup, top_is_res,tot_sup, tot_res, titolo, spread, status_vix, headerColor, positiveColor, negativeColor, volume_ratio, spike_ratio, body_ratio,bbars, status_sdex)
 M2.drawArrowsAndTable(simulato_level, simulato_lower_target_tupla, simulato_higher_target_tupla, sentiment_level, market_buy_pattern)
 // -------------------------------------}
-
