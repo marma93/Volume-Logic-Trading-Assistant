@@ -2204,11 +2204,12 @@ trend_up := endPrice_lr >= startPrice_lr and run > 0 ? true : false
 //
 percent_change = run > 0 ? (endPrice_lr - startPrice_lr) * 100 / math.abs(startPrice_lr)  : na 
 real_pearson   = trend_up ? pearson : -pearson
-lr_distance    = run > 0 ? upperStartPrice_lr - lowerStartPrice_lr                        : na            
-lr_vol_perc   := run > 0 ? 100 - (((global_distance - lr_distance)/global_distance)*100)  : na   
-lr_perc       := run > 0 ? math.round(((endPrice_lr - bot) / global_distance) * 100)      : na       
-lower_lr_perc := run > 0 ? math.round(((lowerEndPrice_lr - bot) / global_distance) * 100) : na
-upper_lr_perc := run > 0 ? math.round(((upperEndPrice_lr - bot) / global_distance) * 100) : na
+lr_distance    = run > 0 ? upperStartPrice_lr - lowerStartPrice_lr                        : na    
+if barstate.isconfirmed        
+    lr_vol_perc   := run > 0 ? 100 - (((global_distance - lr_distance)/global_distance)*100)  : na   
+    lr_perc       := run > 0 ? math.round(((endPrice_lr - bot) / global_distance) * 100)      : na       
+    lower_lr_perc := run > 0 ? math.round(((lowerEndPrice_lr - bot) / global_distance) * 100) : na
+    upper_lr_perc := run > 0 ? math.round(((upperEndPrice_lr - bot) / global_distance) * 100) : na
 // -------------------------------------}
 // Ema per identificare la zona di prezzo
 // -----------------------------------------------------------{
@@ -2251,12 +2252,12 @@ var bool scenario_actual_over_bot_pattern = false
 // Analisi generale di mercato 
 old_sup_perc = math.round(((old_sup - bot) / global_distance) * 100)
 
-var bool figura_val_to_bot_target = false 
+var bool figura_poc_to_bot_target_low = false 
 if (run > 0 and barstate.isconfirmed) or (run > 0 and barstate.islastconfirmedhistory)
     //Dichiarazione di bool persistenti
     var bool figura_val_to_bot_target_low = false 
+    var bool figura_val_to_bot_target = false 
     var bool figura_poc_to_bot_target = false 
-    var bool figura_poc_to_bot_target_low = false 
     var bool figura_vah_to_bot_target = false 
     var bool figura_vah_to_bot_target_low = false 
     var bool figura_bot_liq = false 
@@ -2305,10 +2306,10 @@ if (run > 0 and barstate.isconfirmed) or (run > 0 and barstate.islastconfirmedhi
         break_control_val   := ((na(break_start_perc) or (not na(break_start_perc)) and val_perc   < (break_start_perc - (fib_perc_1)))) and val_is_in_buy
         break_control_poc_2 := ((na(break_start_perc) or (not na(break_start_perc)) and poc_2_perc < (break_start_perc - (fib_perc_1)))) and poc_2_is_in_buy
 
-        poc_is_ready   = (poc_perc  <= lower_lr_perc and poc_perc <= fib_for_scenario)
-        vah_is_ready   = vah_perc   <= lower_lr_perc and vah_perc   <= fib_for_scenario 
-        val_is_ready   = val_perc   <= lower_lr_perc and val_perc   <= fib_for_scenario  
-        poc_2_is_ready = poc_2_perc <= lower_lr_perc and poc_2_perc <= fib_for_scenario 
+        poc_is_ready   = (((poc_perc   <= lower_lr_perc and pearson > 0.5) or (poc_perc   <= lr_perc and pearson < 0.5)) and poc_perc <= fib_for_scenario)
+        vah_is_ready   =  ((vah_perc   <= lower_lr_perc and pearson > 0.5) or (vah_perc   <= lr_perc and pearson < 0.5)) and vah_perc   <= fib_for_scenario 
+        val_is_ready   =  ((val_perc   <= lower_lr_perc and pearson > 0.5) or (val_perc   <= lr_perc and pearson < 0.5)) and val_perc   <= fib_for_scenario  
+        poc_2_is_ready =  ((poc_2_perc <= lower_lr_perc and pearson > 0.5) or (poc_2_perc <= lr_perc and pearson < 0.5)) and poc_2_perc <= fib_for_scenario 
 
         //Definizione delle figure scenario under LR
         figura_poc_2_to_bot_target = break_control_poc_2 and poc_2_is_ready and (poc_2_perc > bot_liq_perc or (poc_2_perc < bot_liq_perc and not bot_liq_is_in_buy))
@@ -2609,8 +2610,6 @@ low_cover_level = tot_sup == 4 ? old_sup_3 : tot_sup == 3 ? old_sup_2 : tot_sup 
 diff_percentage = 100 - (((low_cover_level / close ) * 100))
 // Tabella unificata ottimizzata
 run := run == 3 and bbars < bbars[1] ? 2 : run
-if barstate.isconfirmed and run > 0
-    label.new(bar_index, high, "R:" + str.tostring(run) + " P:" + str.tostring(poc_level), yloc=yloc.abovebar)
 run_result = M2.check_alerts(run, bbars, bar_limit, poc_level, poc_level[1], bot_liq, timeframe_level, up_breakout, up_breakout[1], down_breakout, down_breakout[1], bot) 
 run := run_result == 1 and barstate.isconfirmed ? run + 1 : run 
 M2.tabella_completa(percent_change, real_pearson, costituzione_volume , market, market_buy_pattern, diff_percentage, bot, top, bot_is_sup, top_is_res,tot_sup, tot_res, titolo, spread, status_vix, headerColor, positiveColor, negativeColor, volume_ratio, spike_ratio, body_ratio,bbars, status_sdex)
