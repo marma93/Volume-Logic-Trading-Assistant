@@ -2306,10 +2306,10 @@ if (run > 0 and barstate.isconfirmed) or (run > 0 and barstate.islastconfirmedhi
         break_control_val   := ((na(break_start_perc) or (not na(break_start_perc)) and val_perc   < (break_start_perc - (fib_perc_1)))) and val_is_in_buy
         break_control_poc_2 := ((na(break_start_perc) or (not na(break_start_perc)) and poc_2_perc < (break_start_perc - (fib_perc_1)))) and poc_2_is_in_buy
 
-        poc_is_ready   = (((poc_perc   <= lower_lr_perc and pearson > 0.5) or (poc_perc   <= lr_perc and pearson < 0.5)) and poc_perc <= fib_for_scenario)
-        vah_is_ready   =  ((vah_perc   <= lower_lr_perc and pearson > 0.5) or (vah_perc   <= lr_perc and pearson < 0.5)) and vah_perc   <= fib_for_scenario 
-        val_is_ready   =  ((val_perc   <= lower_lr_perc and pearson > 0.5) or (val_perc   <= lr_perc and pearson < 0.5)) and val_perc   <= fib_for_scenario  
-        poc_2_is_ready =  ((poc_2_perc <= lower_lr_perc and pearson > 0.5) or (poc_2_perc <= lr_perc and pearson < 0.5)) and poc_2_perc <= fib_for_scenario 
+        poc_is_ready   = (((poc_perc   <= lower_lr_perc and pearson >= 0.3) or (poc_perc   <= lr_perc and pearson < 0.3)) and poc_perc <= fib_for_scenario)
+        vah_is_ready   =  ((vah_perc   <= lower_lr_perc and pearson >= 0.3) or (vah_perc   <= lr_perc and pearson < 0.3)) and vah_perc   <= fib_for_scenario 
+        val_is_ready   =  ((val_perc   <= lower_lr_perc and pearson >= 0.3) or (val_perc   <= lr_perc and pearson < 0.3)) and val_perc   <= fib_for_scenario  
+        poc_2_is_ready =  ((poc_2_perc <= lower_lr_perc and pearson >= 0.3) or (poc_2_perc <= lr_perc and pearson < 0.3)) and poc_2_perc <= fib_for_scenario 
 
         //Definizione delle figure scenario under LR
         figura_poc_2_to_bot_target = break_control_poc_2 and poc_2_is_ready and (poc_2_perc > bot_liq_perc or (poc_2_perc < bot_liq_perc and not bot_liq_is_in_buy))
