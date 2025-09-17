@@ -1,0 +1,1459 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © MPELAM
+
+//@version=5
+
+library("Logic_Trade_Bot_Library_BUY")
+
+//Gestione timeframe
+export timeframe_level_function(string current_timeframe) =>
+    // SECONDI - Level 0
+     (current_timeframe == "S" or current_timeframe == "1S" or current_timeframe == "5S" or current_timeframe == "10S" or current_timeframe == "15S")  ? 0 : 
+    // SECONDI ALTI - Level 1  
+     (current_timeframe == "30S" or current_timeframe == "45S" or current_timeframe == "1" or current_timeframe == "1m" or current_timeframe == "2" or current_timeframe == "2m") ? 1 : 
+    // MINUTI BASSI - Level
+     (current_timeframe == "3" or current_timeframe == "3m" or current_timeframe == "5" or current_timeframe == "5m" or current_timeframe == "10" or current_timeframe == "10m") ? 2  : 
+    // MINUTI MEDI - Level 3
+     (current_timeframe == "15" or current_timeframe == "15m" or current_timeframe == "30" or current_timeframe == "30m" or current_timeframe == "45" or current_timeframe == "45m") ? 3 : 
+    // ORE - Level 4
+     (current_timeframe == "60"  or current_timeframe == "1H"  or current_timeframe == "1h" or 
+     current_timeframe  == "120" or current_timeframe == "2H"  or current_timeframe == "2h" or 
+     current_timeframe  == "180" or current_timeframe == "3H"  or current_timeframe == "3h" or 
+     current_timeframe  == "240" or current_timeframe == "4H"  or current_timeframe == "4h" or
+     current_timeframe  == "360" or current_timeframe == "6H"  or current_timeframe == "6h" or
+     current_timeframe  == "480" or current_timeframe == "8H"  or current_timeframe == "8h" or
+     current_timeframe  == "720" or current_timeframe == "12H" or current_timeframe == "12h") ? 4 : 
+    // GIORNI/SETTIMANE/MESI - Level 5
+     (current_timeframe == "D" or current_timeframe == "1D" or current_timeframe == "d"     or 
+     current_timeframe == "W" or current_timeframe == "1W" or current_timeframe == "w"     or 
+     current_timeframe == "M" or current_timeframe == "1M") ? 5 : 3 
+//
+//Lenght ema 
+export length_ema_function(int timeframe_level) => 
+     timeframe_level == 0 ? 13 :
+     timeframe_level == 1 ? 11 :
+     timeframe_level == 2 ? 7 :
+     timeframe_level == 3 ? 5 :
+     timeframe_level == 4 ? 3 : 2
+//
+//Gestione titolo
+export title_spread_n_titoli_function(int counting) =>
+    string titolo_prov = na 
+    if counting == 1 
+        string titolo = na 
+        float spread = na 
+        float n_titoli = na 
+        titolo_prov := syminfo.ticker 
+        titolo := titolo_prov
+        //Indici o driver tradabili 
+        spread := titolo == "NOW"           ? 3         :
+                 titolo == "USB"            ? 0.13      :
+                 titolo == "VIX"            ? 0.18      :
+                 titolo == "MRK"            ? 0.2       :
+                 titolo == "PLATINUM"       ? 7         :
+                 titolo == "US30"           ? 2         : 
+                 titolo == "TECDAX"         ? 11        : 
+                 titolo == "US100"          ? 1.8       : 
+                 titolo == "GOLD"           ? 0.3       : 
+                 titolo == "SILVER"         ? 0.02      : 
+                 titolo == "COPPER"         ? 0.003     : 
+                 titolo == "DE40"           ? 1.5       : 
+                 titolo == "NYFANG"         ? 4         : 
+                 titolo == "US500"          ? 0.02      : 
+                 titolo == "BTCUSD"         ? 50        : 
+                 titolo == "EURUSD"         ? 0.00006   : 
+                 titolo == "USDCNH"         ? 0.00015   : 
+                 titolo == "GBPUSD"         ? 0.00020   : 
+                 titolo == "OIL_CRUDE"      ? 0.03      : 
+                 titolo == "RTY"            ? 0.5       : 
+                 titolo == "HK50"           ? 30        : 
+                 titolo == "FR40"           ? 0.8       : 
+                 titolo == "IT40"           ? 18        : 
+                 titolo == "EU50"           ? 2         : 
+                 titolo == "UNH"            ? 0.3       : 
+                 titolo == "MSFT"           ? 1.1       : 
+                 titolo == "GOOG"           ? 0.22      : 
+                 titolo == "TSLA"           ? 0.37      : 
+                 titolo == "NVDA"           ? 0.11      : 
+                 titolo == "AMZN"           ? 0.17      : 
+                 titolo == "META"           ? 1.6       : 
+                 titolo == "AAPL"           ? 0.27      : 
+                 titolo == "PEP"            ? 0.18      : 
+                 titolo == "NFLX"           ? 1.98      : 
+                 titolo == "C"              ? 0.7       : 
+                 titolo == "MRVL"           ? 0.2       : 
+                 titolo == "DIS"            ? 0.2       : 
+                 titolo == "KER"            ? 0.4       : 
+                 titolo == "BRBY"           ? 0.23      : 
+                 titolo == "LDO"            ? 0.25      : 
+                 titolo == "RACEM"          ? 1.04      : 
+                 titolo == "CPR"            ? 0.025     : 
+                 titolo == "RHM"            ? 4         : 
+                 titolo == "NEXI"           ? 0.10      : 
+                 titolo == "ASML"           ? 1.5       : 
+                 titolo == "BABA"           ? 0.12      : 
+                 titolo == "CL"             ? 0.15      : 
+                 titolo == "ALB"            ? 0.16      : 
+                 titolo == "STLAM"          ? 0.04      : 
+                 titolo == "PRY"            ? 0.2       : 
+                 titolo == "PIRC"           ? 0.03      : 
+                 titolo == "UCG"            ? 0.15      : 
+                 titolo == "BMED"           ? 0.05      : 
+                 titolo == "STMMI"          ? 0.08      : 
+                 titolo == "IPM"            ? 0.12      : 
+                 titolo == "BUND"           ? 0.03      : 
+                 titolo == "SAN"            ? 0.2       : 
+                 titolo == "SMCI"           ? 0.15      : 
+                 titolo == "ALVD"           ? 0.85      : 
+                 titolo == "PINS"           ? 0.14      : 
+                 titolo == "RBLX"           ? 0.2       : 
+                 na       
+        n_titoli := titolo == "NOW"         ?  0.05    :
+                     titolo == "USB"        ? 1        :
+                     titolo == "VIX"        ? 1        :
+                     titolo == "MRK"        ? 0.5       :
+                     titolo == "PLATINUM"   ? 0.07      :
+                     titolo == "US30"       ? 0.005     : 
+                     titolo == "TECDAX"     ? 0.02      : 
+                     titolo == "US100"      ? 0.01      : 
+                     titolo == "GOLD"       ? 0.05      : 
+                     titolo == "SILVER"     ? 2.5       : 
+                     titolo == "COPPER"     ? 15        : 
+                     titolo == "DE40"       ? 0.01      : 
+                     titolo == "NYFANG"     ? 0.01      : 
+                     titolo == "US500"      ? 0.03      : 
+                     titolo == "BTCUSD"     ? 0.00007   : 
+                     titolo == "EURUSD"     ? 100       : 
+                     titolo == "USDCNH"     ? 150       : 
+                     titolo == "GBPUSD"     ? 160       : 
+                     titolo == "OIL_CRUDE"  ? 1         : 
+                     titolo == "RTY"        ? 0.04      : 
+                     titolo == "HK50"       ? 0.03      : 
+                     titolo == "FR40"       ? 0.02      : 
+                     titolo == "IT40"       ? 0.002     : 
+                     titolo == "EU50"       ? 0.03      : 
+                     titolo == "UNH"        ? 0.12      : 
+                     titolo == "MSFT"       ? 0.1       : 
+                     titolo == "GOOG"       ? 0.25      : 
+                     titolo == "TSLA"       ? 0.1       : 
+                     titolo == "NVDA"       ? 0.3       : 
+                     titolo == "AMZN"       ? 0.2       : 
+                     titolo == "META"       ? 0.08      : 
+                     titolo == "AAPL"       ? 0.2       : 
+                     titolo == "PEP"        ? 0.3       : 
+                     titolo == "NFLX"       ? 0.04      : 
+                     titolo == "C"          ? 0.6       : 
+                     titolo == "MRVL"       ? 0.7       : 
+                     titolo == "DIS"        ? 0.4       : 
+                     titolo == "KER"        ? 0.3       : 
+                     titolo == "BRBY"       ? 4         : 
+                     titolo == "LDO"        ? 0.6       : 
+                     titolo == "RACEM"      ? 0.1       : 
+                     titolo == "CPR"        ? 8         : 
+                     titolo == "RHM"        ? 0.02      : 
+                     titolo == "NEXI"       ? 8         : 
+                     titolo == "ASML"       ? 0.06      : 
+                     titolo == "BABA"       ? 0.4       : 
+                     titolo == "CL"         ? 0.7       : 
+                     titolo == "ALB"        ? 1         : 
+                     titolo == "STLAM"      ? 4         : 
+                     titolo == "PRY"        ? 0.8       : 
+                     titolo == "PIRC"       ? 6         : 
+                     titolo == "UCG"        ? 0.6       : 
+                     titolo == "BMED"       ? 2.5       : 
+                     titolo == "STMMI"      ? 1.2       : 
+                     titolo == "IPM"        ? 1         : 
+                     titolo == "BUND"       ? 0.3       : 
+                     titolo == "SAN"        ? 0.5       : 
+                     titolo == "SMCI"       ? 1         : 
+                     titolo == "ALVD"       ? 0.1       : 
+                     titolo == "PINS"       ? 1.1       : 
+                     titolo == "RBLX"       ? 0.4       : 
+                     na
+        [spread, n_titoli, titolo]
+//
+//Indicizzazione vix e SDEX
+export getStatus(float vix, float sdex) =>
+    // Percentili VIX
+    var float p05_vix   = 11.72
+    var float p15_vix   = 12.99
+    var float p35_vix   = 14.84
+    var float p50_vix   = 16.53
+    var float p70_vix   = 19.62
+    var float p85_vix   = 23.76
+    var float p93_vix   = 27.72
+    var float p98_vix   = 32.43
+    // Percentili SDEX
+    var float p05_sdex  = 52.39
+    var float p15_sdex  = 57.60
+    var float p35_sdex  = 60.94
+    var float p50_sdex  = 63
+    var float p70_sdex  = 65.35
+    var float p85_sdex  = 68
+    var float p93_sdex  = 71.1
+    var float p98_sdex  = 73.42
+    // Calcola status VIX
+    status_vix = vix >= p98_vix ? "PANICO" : 
+                 vix >= p93_vix ? "CRITICO" : 
+                 vix >= p85_vix ? "ALTO" : 
+                 vix >= p70_vix ? "ELEVATO" : 
+                 vix >= p50_vix ? "NORMALE" : 
+                 vix >= p35_vix ? "BASSO" : 
+                 vix >= p15_vix ? "MOLTO BASSO" : 
+                 "COMPIACENZA"
+    
+    // Calcola status SDEX
+    status_sdex = sdex >= p98_sdex ? "PANICO" : 
+                  sdex >= p93_sdex ? "CRITICO" : 
+                  sdex >= p85_sdex ? "ALTO" : 
+                  sdex >= p70_sdex ? "ELEVATO" : 
+                  sdex >= p50_sdex ? "NORMALE" : 
+                  sdex >= p35_sdex ? "BASSO" : 
+                  sdex >= p15_sdex ? "MOLTO BASSO" : 
+                  "COMPIACENZA"
+    [status_vix, status_sdex]
+//
+//Ancoraggio iniziale @@@@@@@@@ attualmente non utilizzata, crea errori a mercato chiuso - da verificare con mercato aperto anche se mi pareva andasse bene
+export checkPivotSwitch(int contatore, int tot_position, int run, bool bar_reach, bool block_start_bar, bool ancoraggio_pivot, 
+                       int support_switch_bar, int res_switch_bar, int support_switch_bar_old, 
+                       int res_switch_bar_old, int original_bbars, int bar_limit, float actual_supporto, 
+                       float bot, int bbars, float media_vol, bool bot_block, bool top_block, 
+                       bool bot_block_fast, bool top_block_fast) =>
+    // Variabili locali
+    int _contatore = contatore
+    int contatore_try = 0
+    float top_mom = 0
+    float bot_mom = 9999999
+    float actual_media_vol = 0
+    
+    // Copia variabili di stato per evitare modifiche multiple
+    bool _block_start_bar = block_start_bar
+    bool _bot_block_fast = bot_block_fast
+    bool _top_block_fast = top_block_fast
+    bool _bot_block = bot_block
+    bool _top_block = top_block
+    if tot_position == 0
+        // Primo controllo - supporto recente
+        if ((run == 0 and barstate.islastconfirmedhistory) or bar_reach or (run > 1 and not _block_start_bar)) and ancoraggio_pivot and ((bar_index - support_switch_bar - 1)) < bar_limit and ((bar_index - support_switch_bar - original_bbars)) > 0 and actual_supporto <= bot
+            contatore_try := bar_index - original_bbars - support_switch_bar
+            top_mom := 0
+            bot_mom := 9999999
+            for i = 1 to (bbars + contatore_try)
+                top_mom := high[i] > top_mom ? high[i] : top_mom
+                bot_mom := low[i] < bot_mom ? low[i] : bot_mom
+            actual_media_vol := top_mom - bot_mom
+            if actual_media_vol > media_vol
+                _contatore := bar_index - original_bbars - support_switch_bar
+                _block_start_bar := true
+                _bot_block_fast := true
+        
+        // Secondo controllo - resistenza recente
+        if ((run == 0 and barstate.islastconfirmedhistory) or bar_reach or (run > 1 and not _block_start_bar)) and not _bot_block_fast and ancoraggio_pivot and ((bar_index - res_switch_bar - 1)) < bar_limit and ((bar_index - res_switch_bar - original_bbars)) > 0 and not _bot_block
+            contatore_try := bar_index - original_bbars - res_switch_bar
+            top_mom := 0
+            bot_mom := 9999999
+            for i = 1 to (bbars + contatore_try)
+                top_mom := high[i] > top_mom ? high[i] : top_mom
+                bot_mom := low[i] < bot_mom ? low[i] : bot_mom
+            actual_media_vol := top_mom - bot_mom
+            if actual_media_vol > media_vol
+                _contatore := bar_index - original_bbars - res_switch_bar
+                _block_start_bar := true
+                _top_block_fast := true
+        
+        // Terzo controllo - supporto vecchio
+        if ((run == 0 and barstate.islastconfirmedhistory) or bar_reach or (run > 1 and not _block_start_bar)) and not _top_block_fast and ancoraggio_pivot and ((bar_index - support_switch_bar_old - 1)) < bar_limit and ((bar_index - support_switch_bar_old - original_bbars)) > 0
+            contatore_try := bar_index - original_bbars - support_switch_bar_old
+            top_mom := 0
+            bot_mom := 9999999
+            for i = 1 to (bbars + contatore_try)
+                top_mom := high[i] > top_mom ? high[i] : top_mom
+                bot_mom := low[i] < bot_mom ? low[i] : bot_mom
+            actual_media_vol := top_mom - bot_mom
+            if actual_media_vol > media_vol
+                _contatore := bar_index - original_bbars - support_switch_bar_old
+                _block_start_bar := true
+                _bot_block := true
+                _bot_block_fast := false
+        
+        // Quarto controllo - resistenza vecchia
+        if ((run == 0 and barstate.islastconfirmedhistory or bar_reach or (run > 1 and not _block_start_bar))) and not _bot_block and ancoraggio_pivot and ((bar_index - res_switch_bar_old - 1)) < bar_limit and ((bar_index - res_switch_bar_old - original_bbars)) > 0
+            contatore_try := bar_index - original_bbars - res_switch_bar_old
+            top_mom := 0
+            bot_mom := 9999999
+            for i = 1 to (bbars + contatore_try)
+                top_mom := high[i] > top_mom ? high[i] : top_mom
+                bot_mom := low[i] < bot_mom ? low[i] : bot_mom
+            actual_media_vol := top_mom - bot_mom
+            if actual_media_vol > media_vol
+                _contatore := bar_index - original_bbars - res_switch_bar_old
+                _block_start_bar := true
+                _top_block := true
+                _top_block_fast := false
+    
+    [_contatore, _block_start_bar, _bot_block_fast, _top_block_fast, _bot_block, _top_block]
+//
+//Gestione status market
+export valori_status(string status, string status_sdex, int score, int timeframe_level) =>
+    if barstate.islastconfirmedhistory or barstate.islast 
+        int sentiment_level = 0 
+        float incremento_distanza_pivot = 1 
+        point_sentiment_vix  = status == "PANICO" ? 0 : status == "CRITICO" ? 1 : status == "ALTO" ? 2 : status == "ELEVATO" ? 3 : status == "NORMALE" ? 4 : status == "BASSO" ? 5 : status == "MOLTO BASSO" ? 6 : 7
+        point_sentiment_sdex = status_sdex == "PANICO" ? 0 : status_sdex == "CRITICO" ? 1 : status_sdex == "ALTO" ? 2 : status_sdex == "ELEVATO" ? 3 : status_sdex == "NORMALE" ? 4 : status_sdex == "BASSO" ? 5 : status_sdex == "MOLTO BASSO" ? 6 : 7
+        total_sentiment = point_sentiment_vix + point_sentiment_sdex + score
+        if total_sentiment <= 3
+            sentiment_level := 0
+            if timeframe_level <= 1
+                incremento_distanza_pivot := status == "CRITICO" ? 2 : 2.5
+            else 
+                incremento_distanza_pivot := status == "CRITICO" ? 1.7 : 2
+        else if total_sentiment <= 5
+            if timeframe_level <= 1
+                incremento_distanza_pivot := 1.7
+            else 
+                incremento_distanza_pivot := 1.5
+            sentiment_level := 3
+        else if total_sentiment <= 7
+            if timeframe_level <= 1
+                incremento_distanza_pivot := 1.5
+            else 
+                incremento_distanza_pivot := 1.3
+            sentiment_level := 7
+        else if total_sentiment <= 11
+            if timeframe_level <= 1
+                incremento_distanza_pivot := 1.3
+            else 
+                incremento_distanza_pivot := 1.1
+            sentiment_level := 11
+        else
+            if timeframe_level <= 1
+                incremento_distanza_pivot := 1.1
+            else 
+                incremento_distanza_pivot := 1
+            sentiment_level := 13
+        [sentiment_level, incremento_distanza_pivot]
+//
+//Gestione supporti e resistenze cover
+export scalare_sistema_cover(bool barstate, array<float> a_sup, array<float> a_res, bool bot_is_sup, float bot, float piv_distance,  float piv_distance_1, float piv_distance_2, float piv_distance_3, float top, float piv_distance_1_res, float piv_distance_2_res, float piv_distance_3_res) =>
+    var int   tot_sup     = na 
+    var float old_sup     = na 
+    var float old_sup_1   = na 
+    var float old_sup_2   = na 
+    var float old_sup_3   = na 
+    var int   tot_res     = na 
+    var float old_res     = na 
+    var float old_res_1   = na 
+    var float old_res_2   = na 
+    var float old_res_3   = na 
+    //Iterazione scalare per il sistema cover (816)
+    if barstate and array.size(a_sup) > 0
+        tot_sup                             := 0 
+        
+        array.sort(a_sup, order.descending)  // Ordine decrescente per supporti
+        // Trova il primo supporto <= actual_supporto
+        for i = 0 to array.size(a_sup) - 1
+            if bot_is_sup 
+                if array.get(a_sup, i) < bot - piv_distance
+                    old_sup                 := array.get(a_sup, i)
+                    if not na(old_sup)
+                        tot_sup             += 1
+                    break
+                else 
+                    old_sup := na
+                    old_sup_1 := na 
+                    old_sup_2 := na 
+                    old_sup_3 := na 
+        for i = 0 to array.size(a_sup) - 1
+            if not bot_is_sup
+                if array.get(a_sup, i) < bot
+                    old_sup                 := array.get(a_sup, i)
+                    if not na(old_sup)
+                        tot_sup             += 1
+                    break
+                else 
+                    old_sup := na
+                    old_sup_1 := na 
+                    old_sup_2 := na 
+                    old_sup_3 := na 
+        //
+        if not na(old_sup)
+            for i = 0 to array.size(a_sup) - 1
+                if array.get(a_sup, i) < old_sup - piv_distance_1
+                    old_sup_1               := array.get(a_sup, i)
+                    if not na(old_sup_1)
+                        tot_sup             += 1
+                    break
+        if not na(old_sup_1)
+            for i = 0 to array.size(a_sup) - 1
+                if array.get(a_sup, i) < old_sup_1 - piv_distance_2
+                    old_sup_2               := array.get(a_sup, i)
+                    if not na(old_sup_2)
+                        tot_sup             += 1
+                    break
+        if not na(old_sup_2)
+            for i = 0 to array.size(a_sup) - 1
+                if array.get(a_sup, i) < old_sup_2 - piv_distance_3
+                    old_sup_3               := array.get(a_sup, i)
+                    if not na(old_sup_3)
+                        tot_sup             += 1
+                    break
+        // 
+    if barstate and array.size(a_res) > 0
+        tot_res                             := 0 
+
+        array.sort(a_res, order.ascending) // Ordine crescente per resistenze
+        // Trova la prima resistenza >= actual_resistenza
+        for i = 0 to array.size(a_res) - 1
+            if array.get(a_res, i) > top //and not block_start_bar
+                old_res                 := array.get(a_res, i)
+                if not na(old_res)
+                    tot_res             += 1
+                break
+            else 
+                old_res := na
+                old_res_1 := na 
+                old_res_2 := na 
+                old_res_3 := na 
+        if not na(old_res)
+            for i = 0 to array.size(a_res) - 1
+                if array.get(a_res, i) > old_res + piv_distance_1_res
+                    old_res_1               := array.get(a_res, i)
+                    if not na(old_res_1)
+                        tot_res             += 1 
+                    break
+        if not na(old_res_1)
+            for i = 0 to array.size(a_res) - 1
+                if array.get(a_res, i) > old_res_1 + piv_distance_2_res
+                    old_res_2               := array.get(a_res, i)
+                    if not na(old_res_2)
+                        tot_res             += 1 
+                    break
+        if not na(old_res_2)
+            for i = 0 to array.size(a_res) - 1
+                if array.get(a_res, i) > old_res_2 + piv_distance_3_res
+                    old_res_3               := array.get(a_res, i)
+                    if not na(old_res_3)
+                        tot_res             += 1 
+                    break    
+    [tot_sup, old_sup, old_sup_1, old_sup_2, old_sup_3, tot_res, old_res, old_res_1, old_res_2, old_res_3]
+//
+//Gestione pivot
+export manage_pivots(float pivot_high, float pivot_low, int current_bar, int bar_limit, int bbars,
+                     array<float> high_pivots, array<int> high_bar_indices, 
+                     array<float> low_pivots, array<int> low_bar_indices,
+                     float save_bot_liq, float save_top_liq,
+                     float bot_liq_shadow_prev, float top_liq_shadow_prev) =>
+    // Aggiungi nuovi pivot
+    if not na(pivot_high)
+        array.push(high_pivots, pivot_high)
+        array.push(high_bar_indices, bar_index)
+    if not na(pivot_low)
+        array.push(low_pivots, pivot_low)
+        array.push(low_bar_indices, bar_index)
+    
+    // Rimuovi pivot vecchi
+    if array.size(high_bar_indices) > 0
+        while array.size(high_bar_indices) > 0 and (current_bar - array.get(high_bar_indices, 0)) == bar_limit + 1
+            array.shift(high_pivots)
+            array.shift(high_bar_indices)
+    if array.size(low_bar_indices) > 0
+        while array.size(low_bar_indices) > 0 and (current_bar - array.get(low_bar_indices, 0)) == bar_limit + 1
+            array.shift(low_pivots)
+            array.shift(low_bar_indices)
+    // Calcola bot_liq_shadow
+    float bot_liq_shadow_new = bot_liq_shadow_prev
+    float save_bot_liq_new = save_bot_liq
+    if na(save_bot_liq) or (not na(save_bot_liq) and low < save_bot_liq)
+        bot_liq_shadow_new := na
+        if array.size(high_pivots) > 0
+            array<float> valid_high_pivots = array.new_float(0)
+            for i = 0 to array.size(high_pivots) - 1
+                if (current_bar - array.get(high_bar_indices, i)) < bbars
+                    array.push(valid_high_pivots, array.get(high_pivots, i))
+            if array.size(valid_high_pivots) > 0
+                bot_liq_shadow_new := array.min(valid_high_pivots)
+            if bot_liq_shadow_new < save_bot_liq
+                save_bot_liq_new := na
+    // Calcola top_liq_shadow
+    float top_liq_shadow_new = top_liq_shadow_prev
+    float save_top_liq_new = save_top_liq
+    if na(save_top_liq) or (not na(save_top_liq) and high > save_top_liq)
+        top_liq_shadow_new := na
+        if array.size(low_pivots) > 0
+            array<float> valid_low_pivots = array.new_float(0)
+            for i = 0 to array.size(low_pivots) - 1
+                if (current_bar - array.get(low_bar_indices, i)) < bbars
+                    array.push(valid_low_pivots, array.get(low_pivots, i))
+            if array.size(valid_low_pivots) > 0
+                top_liq_shadow_new := array.max(valid_low_pivots)
+            if top_liq_shadow_new > save_top_liq
+                save_top_liq_new := na
+    bot_liq_shadow_new := not na(save_bot_liq_new) ? save_bot_liq_new : bot_liq_shadow_new
+    top_liq_shadow_new := not na(save_top_liq_new) ? save_top_liq_new : top_liq_shadow_new
+    
+    [bot_liq_shadow_new, top_liq_shadow_new, save_bot_liq_new, save_top_liq_new]
+//
+//Gestione breakout
+export breakout(float top, float actual_resistenza_break, float actual_old_resistenza, float actual_resistenza, float bot, float actual_supporto_break, float actual_old_supporto, float actual_supporto) => 
+    // Inizializzazione dei breakout alla prima esecuzione, deve essere aggiustato, in questo momento rileva falsi break quando l'ancoraggio è avvenuto su supporto old o resistenza old (1003)
+    if barstate.islastconfirmedhistory 
+        var float old_top = na 
+        var float old_bot = na 
+        var float current_res = na 
+        var float current_sup = na 
+        current_res :=
+             actual_old_resistenza == top ? actual_old_resistenza   :
+             actual_resistenza     == top ? actual_resistenza       : 
+             (actual_old_resistenza > top and actual_resistenza > top) ? math.min(actual_old_resistenza, actual_resistenza) :
+             (actual_old_resistenza < top and actual_resistenza < top) ? math.max(actual_old_resistenza, actual_resistenza) :
+             (actual_old_resistenza > top and actual_resistenza < top) ? actual_resistenza :
+             (actual_old_resistenza < top and actual_resistenza > top) ? actual_old_resistenza : na
+        current_sup := 
+             actual_old_supporto == bot ? actual_old_supporto   :
+             actual_supporto     == bot ? actual_supporto       : 
+             (actual_old_supporto > bot and actual_supporto > bot) ? math.min(actual_old_supporto, actual_supporto) :
+             (actual_old_supporto < bot and actual_supporto < bot) ? math.max(actual_old_supporto, actual_supporto) :
+             (actual_old_supporto > bot and actual_supporto < bot) ? actual_old_supporto :
+             (actual_old_supporto < bot and actual_supporto > bot) ? actual_supporto : na
+        if current_res > top 
+            current_res := actual_resistenza_break
+        if top > current_res
+            old_top := current_res
+        if current_sup < bot 
+            current_sup := actual_supporto_break
+        if bot < current_sup
+            old_bot := current_sup 
+        [old_top, old_bot, current_res, current_sup]
+//
+//Pulizia Label
+export clean_labels(array<label> saved_labels) =>
+    // Verifica se l'array supera il limite massimo (100 elementi)
+    if array.size(saved_labels) > 100
+        labels_to_remove                = 20
+        for i = 0 to labels_to_remove - 1
+            if array.size(saved_labels) > 0
+                old_label               = array.get(saved_labels, 0)
+                label.delete(old_label)
+                array.remove(saved_labels, 0)
+//
+//Plot line generale
+export plotlineSystem(int run, int bbars, float poc_level, float poc_second_level, float top, float bot,
+                  float vah_level, float val_level, float bot_liq, float top_liq,
+                  float old_res, float old_sup, float old_res_1, float old_sup_1,
+                  float old_res_2, float old_sup_2, float old_res_3, float old_sup_3,
+                  color poc_color, color poc_2_color, color negativeColor, color positiveColor,
+                  int poc_width, int val_width, int ext_width, bool bot_is_sup) =>
+    if run > 0
+        var line poc_line         = na
+        var line poc_2_line       = na
+        var line top_line         = na
+        var line bot_line         = na
+        var line upper_line       = na
+        var line lower_line       = na
+        var line lower_line_liq   = na
+        var line higher_line_liq  = na
+        var line poc_bot_level_line = na
+        var line poc_top_level_line = na
+        var line res_line         = na
+        var line sup_line         = na
+        var line res_line_1       = na
+        var line sup_line_1       = na
+        var line res_line_2       = na
+        var line sup_line_2       = na
+        var line res_line_3       = na
+        var line sup_line_3       = na
+        
+        line.delete(poc_line)
+        line.delete(poc_2_line)
+        line.delete(top_line)
+        line.delete(bot_line)
+        line.delete(upper_line)
+        line.delete(lower_line)
+        line.delete(lower_line_liq)
+        line.delete(higher_line_liq)
+        line.delete(poc_bot_level_line)
+        line.delete(poc_top_level_line)
+        line.delete(res_line)
+        line.delete(sup_line)
+        line.delete(res_line_1)
+        line.delete(sup_line_1)
+        line.delete(res_line_2)
+        line.delete(sup_line_2)
+        line.delete(res_line_3)
+        line.delete(sup_line_3)
+        
+        // Disegna le linee
+        poc_line         := line.new(bar_index - bbars, poc_level,        bar_index + 23, poc_level,        color=poc_color,     width=poc_width, force_overlay = true)    
+        poc_2_line       := line.new(bar_index - bbars, poc_second_level, bar_index + 23, poc_second_level, color=poc_2_color,   width=val_width, force_overlay = true)    
+        top_line         := line.new(bar_index - bbars, top,              bar_index + 23, top,              color=negativeColor, width=ext_width, force_overlay = true)    
+        bot_line         := line.new(bar_index - bbars, bot,              bar_index + 23, bot,              color=bot_is_sup ? positiveColor : negativeColor, width=ext_width, force_overlay = true)    
+        upper_line       := line.new(bar_index - bbars, vah_level,        bar_index + 23, vah_level,        color=color.white,   width=val_width, force_overlay = true)
+        lower_line       := line.new(bar_index - bbars, val_level,        bar_index + 23, val_level,        color=color.white,   width=val_width, force_overlay = true)
+        lower_line_liq   := line.new(bar_index - bbars, bot_liq,          bar_index + 23, bot_liq,          color=color.green,   width=val_width, force_overlay = true)
+        higher_line_liq  := line.new(bar_index - bbars, top_liq,          bar_index + 23, top_liq,          color=color.red,     width=val_width, force_overlay = true)
+        res_line         := line.new(bar_index - bbars, old_res,          bar_index + 23, old_res,          color=negativeColor, width=2, force_overlay = true)
+        sup_line         := line.new(bar_index - bbars, old_sup,          bar_index + 23, old_sup,          color=positiveColor, width=2, force_overlay = true)
+        res_line_1       := line.new(bar_index - bbars, old_res_1,        bar_index + 23, old_res_1,        color=negativeColor, width=2, force_overlay = true)
+        sup_line_1       := line.new(bar_index - bbars, old_sup_1,        bar_index + 23, old_sup_1,        color=positiveColor, width=2, force_overlay = true)
+        res_line_2       := line.new(bar_index - bbars, old_res_2,        bar_index + 23, old_res_2,        color=negativeColor, width=2, force_overlay = true)
+        sup_line_2       := line.new(bar_index - bbars, old_sup_2,        bar_index + 23, old_sup_2,        color=positiveColor, width=2, force_overlay = true)
+        res_line_3       := line.new(bar_index - bbars, old_res_3,        bar_index + 23, old_res_3,        color=negativeColor, width=2, force_overlay = true)
+        sup_line_3       := line.new(bar_index - bbars, old_sup_3,        bar_index + 23, old_sup_3,        color=positiveColor, width=2, force_overlay = true)
+//
+//Plot istogramma volume
+export drawVolumeHistogram(int run, float top, float bot, int cnum, array<float> volumes, array<box> vol_bars, array<float> levels, int down, int up) =>
+    if (barstate.isconfirmed and run > 0) or (run == 0 and barstate.islastconfirmedhistory)
+        var color vup_color = color.new(color.green, 60)                   
+        var color vdown_color = color.new(color.red, 60)
+        var color up_color = color.new(color.green, 70)       // Colore up standard
+        var color down_color = color.new(color.red, 70)       // Colore down standard
+        dist = (top - bot) / 500
+        // Trova il volume massimo per la normalizzazione
+        float max_vol = 0
+        for i = 0 to cnum - 1
+            max_vol := math.max(max_vol, array.get(volumes, i) + array.get(volumes, i + cnum))
+        // Definisci la larghezza massima desiderata in barre
+        int max_width = 50  // Puoi regolare questo valore secondo le tue preferenze
+        for x = 0 to cnum - 1 by 1
+            box.delete(array.get(vol_bars, x))
+            box.delete(array.get(vol_bars, x + cnum))
+            // Calcola la larghezza normalizzata per volumi rialzisti
+            int bull_width = max_vol > 0 ? math.min(math.round(array.get(volumes, x) / max_vol * max_width), max_width) : 0
+            // Disegna le barre rialziste
+            array.set(vol_bars, x, box.new(bar_index + 23, array.get(levels, x + 1) - dist, bar_index + 23 + bull_width * 2, array.get(levels, x) + dist, border_width=0, bgcolor=x >= down and x <= up ? vup_color : up_color, force_overlay=true))
+            // Calcola la larghezza normalizzata per volumi ribassisti
+            int bear_width = max_vol > 0 ? math.min(math.round(array.get(volumes, x + cnum) / max_vol * max_width), max_width) : 0
+            // Disegna le barre ribassiste
+            array.set(vol_bars, x + cnum, box.new(bar_index + 23 + (bull_width * 2), array.get(levels, x + 1) - dist, bar_index + 23 + (bull_width * 2) + (bear_width * 2), array.get(levels, x) + dist, border_width=0, bgcolor=x >= down and x <= up ? vdown_color : down_color, force_overlay=true))
+//
+//Calc slope lr
+export calcSlope_lr(float source_lr, int length_lr, float run) =>
+    max_bars_back(source_lr, 5000)
+    if run > 0 and (barstate.isconfirmed or barstate.islastconfirmedhistory) 
+        sumX_lr                         = 0.0
+        sumY_lr                         = 0.0
+        sumXSqr_lr                      = 0.0
+        sumXY_lr                        = 0.0
+        for i_lr = 0 to length_lr - 1
+            val_lr                      = source_lr[i_lr]
+            per_lr                      = i_lr + 1.0
+            sumX_lr                     += per_lr
+            sumY_lr                     += val_lr
+            sumXSqr_lr                  += per_lr * per_lr
+            sumXY_lr                    += val_lr * per_lr
+        slope_lr                        = (length_lr * sumXY_lr - sumX_lr * sumY_lr) / (length_lr * sumXSqr_lr - sumX_lr * sumX_lr)
+        average_lr                      = sumY_lr / length_lr
+        intercept_lr                    = average_lr - slope_lr * sumX_lr / length_lr + slope_lr
+        [slope_lr, average_lr, intercept_lr]
+//
+//Calc dev lr
+export calcDev_lr(float source_lr, int length_lr, float slope_lr, float average_lr, float intercept_lr, float run) =>
+    if run > 0 and (barstate.isconfirmed or barstate.islastconfirmedhistory) 
+        upDev_lr                        = 0.0
+        dnDev_lr                        = 0.0
+        stdDevAcc_lr                    = 0.0
+        dsxx_lr                         = 0.0
+        dsyy_lr                         = 0.0
+        dsxy_lr                         = 0.0
+        periods_lr                      = length_lr - 1
+        daY_lr                          = intercept_lr + slope_lr * periods_lr / 2
+        val_lr                          = intercept_lr
+        for j_lr = 0 to periods_lr
+            price_lr                    = high[j_lr] - val_lr
+            if price_lr > upDev_lr
+                upDev_lr                := price_lr
+            price_lr                    := val_lr - low[j_lr]
+            if price_lr > dnDev_lr
+                dnDev_lr                := price_lr
+            price_lr                    := source_lr[j_lr]
+            dxt_lr                      = price_lr - average_lr
+            dyt_lr                      = val_lr - daY_lr
+            price_lr                    -= val_lr
+            stdDevAcc_lr                += price_lr * price_lr
+            dsxx_lr                     += dxt_lr * dxt_lr
+            dsyy_lr                     += dyt_lr * dyt_lr
+            dsxy_lr                     += dxt_lr * dyt_lr
+            val_lr                      += slope_lr
+        //
+        stdDev_lr                       = math.sqrt(stdDevAcc_lr / (periods_lr == 0 ? 1 : periods_lr))
+        pearsonR_lr                     = dsxx_lr == 0 or dsyy_lr == 0 ? 0 : dsxy_lr / math.sqrt(dsxx_lr * dsyy_lr)
+        [stdDev_lr, pearsonR_lr, upDev_lr, dnDev_lr]
+//
+//Plot actual bot line 
+export processActualBotPattern(int actual_supporto_poc_perc, int target_buy_perc, string market_buy_pattern, line scenario_actual_bot_line, bool scenario_actual_over_bot_pattern,
+                             array<int> peak_level_perc, array<float> peak_level_ar, 
+                             int actual_support_over_bot_perc, float lower_lr_perc, 
+                             float ema_perc, array<float> levels, array<float> sma_volumes, 
+                             int cnum) =>
+    line.delete(scenario_actual_bot_line)
+    
+    int result_supporto_poc_perc = actual_supporto_poc_perc
+    int result_target_buy_perc = target_buy_perc
+    string result_market_buy_pattern = market_buy_pattern
+    
+    if scenario_actual_over_bot_pattern
+        result_supporto_poc_perc := actual_support_over_bot_perc
+        result_market_buy_pattern := "Actual Bot"
+        
+        if array.size(peak_level_perc) > 0
+            float max_volume = 0
+            int best_peak_perc = na
+            
+            for i = 0 to array.size(peak_level_perc) - 1
+                peak_perc_value = array.get(peak_level_perc, i)
+                if peak_perc_value > actual_support_over_bot_perc and peak_perc_value < lower_lr_perc and peak_perc_value < ema_perc
+                    float peak_level = array.get(peak_level_ar, i)
+                    for j = 0 to cnum - 1
+                        if peak_level >= array.get(levels, j) and peak_level < array.get(levels, j + 1)
+                            float vol = array.get(sma_volumes, j)
+                            if vol > max_volume
+                                max_volume := vol
+                                best_peak_perc := peak_perc_value
+                            break
+            
+            if not na(best_peak_perc)
+                result_supporto_poc_perc := best_peak_perc
+                result_target_buy_perc := result_supporto_poc_perc
+            else 
+                result_supporto_poc_perc := actual_support_over_bot_perc
+                result_target_buy_perc := result_supporto_poc_perc
+    
+    [result_supporto_poc_perc, result_target_buy_perc, result_market_buy_pattern]
+//
+//Get level from perc
+export get_level_from_perc(float target_perc, int old_sup_perc, float old_sup, float top, float bot, int old_res_perc, float old_res, float bot_liq_perc, float bot_liq, float val_perc, float val_level, float poc_perc, float poc_level, float vah_perc, float vah_level, float top_liq_perc, float top_liq, float poc_2_perc, float poc_second_level, float actual_support_over_bot_perc, float actual_supporto, array<float> peak_level_perc, array<float> peak_level_ar) =>
+    float ret_level = na
+    // Implementazione direct-mapping con strict equality first
+    if target_perc == bot_liq_perc
+        ret_level := bot_liq
+    else if target_perc == val_perc
+        ret_level := val_level
+    else if target_perc == poc_perc
+        ret_level := poc_level
+    else if target_perc == vah_perc
+        ret_level := vah_level
+    else if target_perc == top_liq_perc
+        ret_level := top_liq
+    else if target_perc == poc_2_perc
+        ret_level := poc_second_level
+    else if target_perc == actual_support_over_bot_perc
+        ret_level := actual_supporto
+    else if target_perc == old_res_perc
+        ret_level := old_res
+    else if target_perc == old_sup_perc
+        ret_level := old_sup
+    else if target_perc == 100
+        ret_level := top
+    else if target_perc == 0
+        ret_level := bot
+        
+    // Nuovo controllo per i picchi
+    if na(ret_level) and array.size(peak_level_perc) > 0
+        for i = 0 to array.size(peak_level_perc) - 1
+            if target_perc == array.get(peak_level_perc, i)
+                ret_level := array.get(peak_level_ar, i)
+                break
+    ret_level
+//
+//Calcolo cmf
+export cmf_calculation(int bar_limit, float prev_clv, float prev_mfv, float prev_cmfLine) =>
+    float clv_new = barstate.isconfirmed ? high == low ? 0 : (close - low - (high - close)) / (high - low) : prev_clv
+    float mfv_new = barstate.isconfirmed ? clv_new * nz(volume, 1) : prev_mfv
+    float cmfLine_new = barstate.isconfirmed ? 
+         (ta.percentrank(math.sum(mfv_new, bar_limit) / math.sum(nz(volume, 1), bar_limit), bar_limit) - 50) * 2 : 
+         prev_cmfLine
+    int score_new = barstate.isconfirmed ? 
+         (cmfLine_new > 80 ? 3 : cmfLine_new > 60 ? 2 : cmfLine_new > 20 ? 1 : 
+         cmfLine_new > -20 ? -1 : cmfLine_new > -60 ? -2 : cmfLine_new > -80 ? -3 : 0) : 0
+    [clv_new, mfv_new, cmfLine_new, score_new]
+//
+//Tabella cmf
+export createCMFTable(float cmfValue) =>
+    if barstate.isconfirmed 
+        // Calcola durata 1440 candele
+        tf = timeframe.period
+        minutes_total = 
+             (tf == "S" or tf == "1S") ? 24 :
+             tf == "5S" ? 120 :
+             tf == "10S" ? 240 :
+             tf == "15S" ? 360 :
+             tf == "30S" ? 720 :
+             tf == "45S" ? 1080 :
+             (tf == "1" or tf == "1m") ? 1440 :
+             (tf == "2" or tf == "2m") ? 2880 :
+             (tf == "3" or tf == "3m") ? 4320 :
+             (tf == "5" or tf == "5m") ? 7200 :
+             (tf == "10" or tf == "10m") ? 14400 :
+             (tf == "15" or tf == "15m") ? 21600 :
+             (tf == "30" or tf == "30m") ? 43200 :
+             (tf == "45" or tf == "45m") ? 64800 :
+             (tf == "60" or tf == "1H" or tf == "1h") ? 86400 :
+             (tf == "120" or tf == "2H" or tf == "2h") ? 172800 :
+             (tf == "180" or tf == "3H" or tf == "3h") ? 259200 :
+             (tf == "240" or tf == "4H" or tf == "4h") ? 345600 :
+             (tf == "360" or tf == "6H" or tf == "6h") ? 518400 :
+             (tf == "480" or tf == "8H" or tf == "8h") ? 691200 :
+             (tf == "720" or tf == "12H" or tf == "12h") ? 1036800 :
+             (tf == "D" or tf == "1D" or tf == "d") ? 2073600 :
+             (tf == "W" or tf == "1W" or tf == "w") ? 14515200 :
+             (tf == "M" or tf == "1M") ? 62208000 : 0
+        durata = "N/A"
+        if minutes_total > 0
+            anni = math.floor(minutes_total / 525600)
+            resto = minutes_total % 525600
+            mesi = math.floor(resto / 43200)
+            resto := resto % 43200
+            giorni = math.floor(resto / 1440)
+            resto := resto % 1440
+            ore = math.floor(resto / 60)
+            minuti = resto % 60
+            
+            parts = array.new<string>()
+            if anni > 0
+                array.push(parts, str.format("{0} anni", anni))
+            if mesi > 0
+                array.push(parts, str.format("{0} mesi", mesi))
+            if giorni > 0
+                array.push(parts, str.format("{0} giorni", giorni))
+            if ore > 0
+                array.push(parts, str.format("{0} ore", ore))
+            if minuti > 0
+                array.push(parts, str.format("{0} minuti", minuti))
+            durata := array.join(parts, " ")
+        // Crea/aggiorna tabella
+        var table cmfTable = table.new(position.top_right, 1, 3, bgcolor=color.new(color.black, 85), force_overlay = true)
+        table.cell(cmfTable, 0, 0, "Analisi CMF", text_color=color.white, text_size=size.normal)
+        table.cell(cmfTable, 0, 1, str.tostring(cmfValue, "#.##"), text_color=color.white, text_size=size.normal)
+        table.cell(cmfTable, 0, 2, "Durata CMF: " + durata, text_color=color.white, text_size=size.small)
+//
+//Popolamento array per target
+export populate_orig_perc_array(int bot_liq_perc, int val_perc, int poc_perc, int vah_perc, int top_liq_perc, int poc_2_perc,array<int> peak_level_perc) =>
+    array<int> result = array.new_int()
+    array.push(result, bot_liq_perc)
+    array.push(result, val_perc)
+    array.push(result, poc_perc)
+    array.push(result, vah_perc)
+    array.push(result, top_liq_perc)
+    array.push(result, poc_2_perc)
+    if array.size(peak_level_perc) > 0
+        for i = 0 to array.size(peak_level_perc) - 1
+            array.push(result, array.get(peak_level_perc, i))
+    result
+//
+// Calcolo dei target
+export calculate_target_percentages(float[] price_array, float perc_level, float sentiment_level, float timeframe_level, float fib_perc_1, float fib_perc_2, float fib_perc_3, float fib_perc_4, float fib_perc_5, float fib_perc_6, bool break_with_res, float old_res_perc) =>
+    float lower_target_percentage = na
+    float higher_target_percentage = na
+    float temp_value = na
+    
+    perc_level_fib = perc_level <= fib_perc_1 ? 1 : perc_level <= fib_perc_2 ? 2 : perc_level <= fib_perc_3 ? 3 : perc_level <= fib_perc_4 ? 4 : perc_level <= fib_perc_5 ? 5 : perc_level <= fib_perc_6 ? 6 : 6
+    gap_fib_for_target_mid = perc_level_fib <= 2 and sentiment_level > 11 ? 2 : perc_level_fib <= 2 and sentiment_level <= 11 ? 1 : perc_level_fib <= 4 and sentiment_level > 11 ? 1 : 0
+    
+    // Calcola soglie base in base alla zona fib
+    float min_base = perc_level_fib == 6 ? 40 : perc_level_fib == 5 ? 35 : perc_level_fib == 4 ? 35 : perc_level_fib == 3 ? 30 : perc_level_fib == 2 ? 25 : perc_level_fib == 1 ? 20 : 20
+    float mid_base = perc_level_fib == 6 ? 80 : perc_level_fib == 5 ? 75 : perc_level_fib == 4 ? 70 : perc_level_fib == 3 ? 65 : perc_level_fib == 2 ? 60 : perc_level_fib == 1 ? 45 : 40
+    
+    // Modifica formule soglie in base a break_with_res
+    float reference_value = break_with_res ? old_res_perc : 100
+    float min_base_threshold = perc_level + math.round(reference_value - perc_level) / 100 * (min_base - (timeframe_level * 2) + sentiment_level)
+    float mid_base_threshold = perc_level + math.round(reference_value - perc_level) / 100 * (mid_base - (timeframe_level * 2) + sentiment_level)
+
+    float min_threshold = min_base_threshold 
+    float mid_threshold = mid_base_threshold
+    
+    // Copia array e aggiungi old_res_perc se necessario
+    float[] sorted_array = array.copy(price_array)
+    if break_with_res
+        array.push(sorted_array, old_res_perc)
+    
+    array.sort(sorted_array, order.descending)
+    
+    // FASE 1: Trova MIN
+    // Cerca valori tra min_threshold e mid_threshold
+    int values_found = 0
+    for i = 0 to array.size(sorted_array) - 1
+        float val = array.get(sorted_array, i)
+        if val > min_threshold and val <= mid_threshold
+            if values_found == 0
+                lower_target_percentage := val  // Il più alto nella zona
+            else if values_found == 1
+                temp_value := val  // Il secondo più alto
+            values_found += 1
+    
+    // Se non trovo valori tra min e mid, prendo il primo sopra mid
+    if na(lower_target_percentage)
+        for i = array.size(sorted_array) - 1 to 0
+            float val = array.get(sorted_array, i)
+            if val > mid_threshold
+                lower_target_percentage := val
+                break
+    
+    min_level_fib = lower_target_percentage <= fib_perc_1 ? 1 : lower_target_percentage <= fib_perc_2 ? 2 : lower_target_percentage <= fib_perc_3 ? 3 : lower_target_percentage <= fib_perc_4 ? 4 : lower_target_percentage <= fib_perc_5 ? 5 : lower_target_percentage <= fib_perc_6 ? 6 : 6
+    
+    // FASE 2: Trova MID basandosi su dove si trova MIN
+    if not na(lower_target_percentage)
+        // Se MIN è tra min_threshold e mid_threshold
+        if lower_target_percentage > min_threshold and lower_target_percentage <= mid_threshold
+            // Cerca il primo sopra mid_threshold
+            for i = array.size(sorted_array) - 1 to 0
+                float val = array.get(sorted_array, i)
+                if val > mid_threshold
+                    val_level_fib = val <= fib_perc_1 ? 1 : val <= fib_perc_2 ? 2 : val <= fib_perc_3 ? 3 : val <= fib_perc_4 ? 4 : val <= fib_perc_5 ? 5 : val <= fib_perc_6 ? 6 : 6
+                    if val_level_fib > min_level_fib + gap_fib_for_target_mid
+                        higher_target_percentage := val
+                        break
+            
+            if na(higher_target_percentage)
+                for i = array.size(sorted_array) - 1 to 0
+                    float val = array.get(sorted_array, i)
+                    if val > mid_threshold
+                        higher_target_percentage := val
+                        break
+            
+            // Se non trovo nulla sopra mid_threshold e ho un temp
+            if na(higher_target_percentage) and not na(temp_value)
+                higher_target_percentage := lower_target_percentage
+                lower_target_percentage := temp_value
+            else if na(higher_target_percentage)
+                higher_target_percentage := lower_target_percentage
+        
+        // Se MIN è già sopra mid_threshold
+        else if lower_target_percentage > mid_threshold
+            // Cerca il primo sopra MIN
+            for i = array.size(sorted_array) - 1 to 0
+                float val = array.get(sorted_array, i)
+                if val > lower_target_percentage
+                    higher_target_percentage := val
+                    break
+            
+            // Se non trovo nulla sopra MIN
+            if na(higher_target_percentage)
+                higher_target_percentage := lower_target_percentage
+    
+    [lower_target_percentage, higher_target_percentage]
+//
+//Ratio vari
+export calculateMetrics(int bbars) =>
+    if barstate.isconfirmed or barstate.islastconfirmedhistory
+        var float volume_up = 0
+        var float volume_down = 0
+        var float spike_up = 0
+        var float spike_down = 0
+        var float body_up = 0
+        var float body_down = 0
+        var float volume_ratio = 0
+        var float spike_ratio = 0
+        var float body_ratio = 0
+
+        up_candle = close > open
+        body = math.abs(close-open)
+        spike_up_value   = up_candle ? (open - low) : (close - low)
+        spike_down_value = up_candle ? (high - close) : (high - open)
+
+        if volume_up != 0
+            volume_up := up_candle ? volume_up + volume : volume_up
+            volume_down := not up_candle ? volume_down + volume : volume_down 
+            spike_up :=   spike_up + spike_up_value
+            spike_down := spike_down + spike_down_value
+            body_up := up_candle ? body_up + body : body_up
+            body_down := not up_candle ? body_down + body : body_down
+        //
+        if barstate.islastconfirmedhistory or (bbars < bbars[1])
+            volume_up   := 0
+            volume_down := 0
+            spike_up    := 0
+            spike_down  := 0
+            body_up := 0
+            body_down := 0
+            for i = 1 to bbars
+                volume_up := up_candle[i] ? volume_up + volume[i] : volume_up
+                volume_down := not up_candle[i] ? volume_down + volume[i] : volume_down
+                spike_up :=   spike_up + spike_up_value[i]
+                spike_down := spike_down + spike_down_value[i]
+                body_up := up_candle[i] ? body_up + body[i] : body_up
+                body_down := not up_candle[i] ? body_down + body[i] : body_down
+        volume_ratio := volume_up / volume_down
+        spike_ratio := spike_up / spike_down
+        body_ratio := body_up / body_down 
+        [volume_ratio, spike_ratio, body_ratio, volume_up, volume_down, spike_up, spike_down, body_up, body_down]
+//
+//Alert
+export check_alerts(int run, int bbars, int bar_limit, float poc_level, float poc_level_prev, float bot_liq, int timeframe_level, bool up_breakout, bool up_breakout_prev, bool down_breakout, bool down_breakout_prev, float bot) =>
+    int run_funz = 0
+    if run > 0 and barstate.isconfirmed
+        if bbars == bar_limit and bbars[1] != bar_limit[1]
+            alert("Bar Limit Reach", alert.freq_once_per_bar)
+            run_funz := 1
+        if na(poc_level)
+            alert("NO POC" + str.tostring(bot), alert.freq_once_per_bar)
+        if na(bot_liq)
+            alert("NO LIQ", alert.freq_once_per_bar)
+        if timeframe_level > 3 and poc_level != poc_level_prev and run > 1
+            alert("SWITCH POC", alert.freq_once_per_bar)
+        if timeframe_level > 2 and up_breakout != up_breakout_prev
+            alert("UP BREAK", alert.freq_once_per_bar)
+        if timeframe_level > 2 and down_breakout != down_breakout_prev
+            alert("DOWN BREAK", alert.freq_once_per_bar)
+    run_funz
+//
+//Tabella generale
+export tabella_completa(float percent_change, float real_pearson, string volume_dispersion, 
+                       string market, string market_buy_pattern, float diff_percentage, 
+                       float bot, float top, bool bot_is_sup, bool top_is_res,
+                       int tot_sup, int tot_res, string titolo, float spread, 
+                       string vix_status, color headerColor, color positiveColor, 
+                       color negativeColor,
+                       float volume_ratio, float spike_ratio, float body_ratio,
+                       int bbars_value, string status_sdex) =>
+    
+    // Tabella unificata: 16 colonne x 4 righe
+    var table unifiedTable = table.new(position.top_right, 16, 4, color.new(color.black, 80), 
+                                         border_width=1, border_color=color.new(color.gray, 60),
+                                         force_overlay=false)
+
+    if barstate.isconfirmed
+        pos_color = color.new(positiveColor, 90)
+        neg_color = color.new(negativeColor, 90)
+        text_color = color.white
+        label_color = color.new(color.gray, 40)
+        value_color = color.new(color.black, 70)
+        
+        // ===== CALCOLO DATA E DURATA =====
+        target_time = time[bbars_value]
+        datetime_str = str.format("{0,number,0000}-{1,number,00}-{2,number,00} {3,number,00}:{4,number,00}", 
+                                     year(target_time), month(target_time), dayofmonth(target_time),
+                                     hour(target_time), minute(target_time))
+        
+        // Calcolo durata
+        trend_duration_ms = time - target_time
+        total_seconds = trend_duration_ms / 1000
+        total_minutes = total_seconds / 60
+        total_hours = total_minutes / 60
+        total_days = total_hours / 24
+        total_weeks = total_days / 7
+        total_months = total_days / 30
+        total_years = total_days / 365
+        
+        anni = math.floor(total_years)
+        mesi = math.floor(total_months % 12)
+        settimane = math.floor(total_weeks % 4.3)
+        giorni = math.floor(total_days % 7)
+        ore = math.floor(total_hours % 24)
+        minuti = math.floor(total_minutes % 60)
+        secondi = math.floor(total_seconds % 60)
+        
+        // Costruisci stringa durata
+        duration_parts = array.new<string>()
+        
+        if anni > 0
+            array.push(duration_parts, str.format("{0} anni", anni))
+        if mesi > 0
+            array.push(duration_parts, str.format("{0} mesi", mesi))
+        if settimane > 0 
+            array.push(duration_parts, str.format("{0} settimane", settimane))
+        if giorni > 0 
+            array.push(duration_parts, str.format("{0} giorni", giorni))
+        if ore > 0 
+            array.push(duration_parts, str.format("{0} ore", ore))
+        if minuti > 0 
+            array.push(duration_parts, str.format("{0} minuti", minuti))
+        if secondi > 0 
+            array.push(duration_parts, str.format("{0} secondi", secondi))
+        
+        if array.size(duration_parts) == 0
+            array.push(duration_parts, "0 secondi")
+        
+        duration_str = ""
+        max_parts = math.min(array.size(duration_parts), 4)
+        for i = 0 to max_parts - 1
+            if i > 0
+                duration_str += " "
+            duration_str += array.get(duration_parts, i)
+        
+        // ===== RIGA 0: HEADERS =====
+        table.cell(unifiedTable, 0, 0, "MARKET STATUS", text_color = text_color, 
+                     bgcolor=headerColor, text_halign=text.align_center)
+        table.merge_cells(unifiedTable, 0, 0, 3, 0)
+        
+        table.cell(unifiedTable, 4, 0, "", bgcolor=color.new(color.black, 50))
+        
+        table.cell(unifiedTable, 5, 0, "LIVELLI", text_color=text_color, 
+                     bgcolor=headerColor, text_halign=text.align_center) 
+        table.merge_cells(unifiedTable, 5, 0, 7, 0)
+        
+        table.cell(unifiedTable, 8, 0, "", bgcolor=color.new(color.black, 50))
+        
+        table.cell(unifiedTable, 9, 0, "INFO", text_color=text_color, 
+                     bgcolor=headerColor, text_halign=text.align_center)
+        table.merge_cells(unifiedTable, 9, 0, 10, 0)
+        
+        table.cell(unifiedTable, 11, 0, "", bgcolor=color.new(color.black, 50))
+        
+        table.cell(unifiedTable, 12, 0, "RATIO", text_color=text_color, 
+                     bgcolor=headerColor, text_halign=text.align_center)
+        table.merge_cells(unifiedTable, 12, 0, 13, 0)
+        
+        table.cell(unifiedTable, 14, 0, "", bgcolor=color.new(color.black, 50))
+        
+        table.cell(unifiedTable, 15, 0, "INFO", text_color=text_color, 
+                     bgcolor=headerColor, text_halign=text.align_center)
+        
+        // ===== RIGA 1 =====
+        // QUADRANTE 1: MARKET STATUS
+        table.cell(unifiedTable, 0, 1, "TRD", text_color=text_color, 
+                     bgcolor=label_color, text_halign=text.align_center)
+        table.cell(unifiedTable, 1, 1, ((percent_change >= 0 ? "+" : "") + 
+                     str.tostring(percent_change, "#.##") + "%"), text_color=text_color, 
+                     bgcolor=percent_change >= 0 ? pos_color : neg_color, 
+                     text_halign=text.align_center)
+        table.cell(unifiedTable, 2, 1, "DISP", text_color=text_color, 
+                     bgcolor=label_color, text_halign=text.align_center)
+        table.cell(unifiedTable, 3, 1, volume_dispersion, text_color=text_color, 
+                     bgcolor=value_color, text_halign=text.align_center)
+        
+        table.cell(unifiedTable, 4, 1, "", bgcolor=color.new(color.black, 50))
+        
+        // QUADRANTE 2: LIVELLI
+        table.cell(unifiedTable, 5, 1, "", bgcolor=color.new(color.black, 90))
+        table.cell(unifiedTable, 6, 1, "VALUE", text_color=text_color, 
+                     bgcolor=label_color, text_halign=text.align_center)
+        table.cell(unifiedTable, 7, 1, "N° TOTALE", text_color=text_color, 
+                     bgcolor=label_color, text_halign=text.align_center)
+        
+        table.cell(unifiedTable, 8, 1, "", bgcolor=color.new(color.black, 50))
+        
+        // QUADRANTE 3: INFO
+        table.cell(unifiedTable, 9, 1, "GESTIONE", text_color=text_color, 
+                     bgcolor=label_color, text_halign=text.align_center)
+        table.cell(unifiedTable, 10, 1, (str.tostring(diff_percentage, "#.##") + "%"), text_color=text_color, 
+                     bgcolor=value_color, text_halign=text.align_center)
+        
+        table.cell(unifiedTable, 11, 1, "", bgcolor=color.new(color.black, 50))
+        
+        // QUADRANTE 4: RATIO
+        table.cell(unifiedTable, 12, 1, "Ratio Vol", text_color=text_color, 
+                     bgcolor=label_color, text_halign=text.align_center)
+        table.cell(unifiedTable, 13, 1, str.tostring(volume_ratio, "#.##"), text_color=text_color, 
+                     bgcolor= volume_ratio >= 1 ? pos_color : neg_color, text_halign=text.align_center)
+        
+        table.cell(unifiedTable, 14, 1, "START", text_color=text_color, 
+                     bgcolor=label_color, text_halign=text.align_center)
+        table.cell(unifiedTable, 15, 1, datetime_str, text_color=text_color, 
+                     bgcolor=value_color, text_halign=text.align_center, text_size=size.tiny)
+        
+        // ===== RIGA 2 =====
+        // QUADRANTE 1: MARKET STATUS
+        table.cell(unifiedTable, 0, 2, "PRS", text_color=text_color, 
+                     bgcolor=label_color, text_halign=text.align_center)
+        table.cell(unifiedTable, 1, 2, real_pearson >= 0 ? "+" + str.tostring(real_pearson, "#.##" + "%") : str.tostring(real_pearson, "#.##"+ "%"), 
+                     text_color=text_color, bgcolor=real_pearson >= 0 ? pos_color : neg_color, 
+                     text_halign=text.align_center)
+        table.cell(unifiedTable, 2, 2, "MKT", text_color=text_color, 
+                     bgcolor=label_color, text_halign=text.align_center)
+        table.cell(unifiedTable, 3, 2, market, text_color=text_color, 
+                     bgcolor=value_color, text_halign=text.align_center)
+        
+        table.cell(unifiedTable, 4, 2, "", bgcolor=color.new(color.black, 50))
+        
+        // QUADRANTE 2: LIVELLI
+        table.cell(unifiedTable, 5, 2, "SUP", text_color=text_color, 
+                     bgcolor=bot_is_sup ? pos_color : label_color,
+                     text_halign=text.align_center)
+        table.cell(unifiedTable, 6, 2, str.tostring(bot, "#.##"), text_color=text_color, 
+                     bgcolor=value_color, text_halign=text.align_center)
+        table.cell(unifiedTable, 7, 2, str.tostring(tot_sup), text_color=text_color, 
+                     bgcolor=tot_sup > 0 ? pos_color : value_color,
+                     text_halign=text.align_center)
+        
+        table.cell(unifiedTable, 8, 2, "", bgcolor=color.new(color.black, 50))
+        
+        // QUADRANTE 3: INFO
+        table.cell(unifiedTable, 9, 2, "TITOLO", text_color=text_color, 
+                     bgcolor=label_color, text_halign=text.align_center)
+        table.cell(unifiedTable, 10, 2, titolo, text_color=text_color, 
+                     bgcolor=value_color, text_halign=text.align_center)
+        
+        table.cell(unifiedTable, 11, 2, "", bgcolor=color.new(color.black, 50))
+        
+        // QUADRANTE 4: RATIO
+        table.cell(unifiedTable, 12, 2, "Ratio Spike", text_color=text_color, 
+                     bgcolor=label_color, text_halign=text.align_center)
+        table.cell(unifiedTable, 13, 2, str.tostring(spike_ratio, "#.##"), text_color=text_color, 
+                     bgcolor=spike_ratio >= 1 ? pos_color : neg_color, text_halign=text.align_center)
+        
+        table.cell(unifiedTable, 14, 2, "DURATA", text_color=text_color, 
+                     bgcolor=label_color, text_halign=text.align_center)
+        table.cell(unifiedTable, 15, 2, duration_str, text_color=text_color, 
+                     bgcolor=value_color, text_halign=text.align_center, text_size=size.tiny)
+        
+        // ===== RIGA 3 =====
+        // QUADRANTE 1: MARKET STATUS (BBars al posto di VIX)
+        table.cell(unifiedTable, 0, 3, "BBars", text_color=text_color, 
+                     bgcolor=label_color, text_halign=text.align_center)
+        table.cell(unifiedTable, 1, 3, str.tostring(bbars_value), text_color=text_color, 
+                     bgcolor=value_color, text_halign=text.align_center)
+        table.cell(unifiedTable, 2, 3, "PTN", text_color=text_color, 
+                     bgcolor=label_color, text_halign=text.align_center)
+        table.cell(unifiedTable, 3, 3, market_buy_pattern, text_color=text_color, 
+                     bgcolor=value_color, text_halign=text.align_center)
+        
+        table.cell(unifiedTable, 4, 3, "", bgcolor=color.new(color.black, 50))
+        
+        // QUADRANTE 2: LIVELLI
+        table.cell(unifiedTable, 5, 3, "RES", text_color=text_color, 
+                     bgcolor=top_is_res ? neg_color : label_color,
+                     text_halign=text.align_center)
+        table.cell(unifiedTable, 6, 3, str.tostring(top, "#.##"), text_color=text_color, 
+                     bgcolor=value_color, text_halign=text.align_center)
+        table.cell(unifiedTable, 7, 3, str.tostring(tot_res), text_color=text_color, 
+                     bgcolor=tot_res > 0 ? neg_color : value_color,
+                     text_halign=text.align_center)
+        
+        table.cell(unifiedTable, 8, 3, "", bgcolor=color.new(color.black, 50))
+        
+        // QUADRANTE 3: INFO
+        table.cell(unifiedTable, 9, 3, "SPREAD", text_color=text_color, 
+                     bgcolor=label_color, text_halign=text.align_center)
+        table.cell(unifiedTable, 10, 3, str.tostring(spread), text_color=text_color, 
+                     bgcolor=value_color, text_halign=text.align_center)
+        
+        table.cell(unifiedTable, 11, 3, "", bgcolor=color.new(color.black, 50))
+        
+        // QUADRANTE 4: RATIO
+        table.cell(unifiedTable, 12, 3, "Ratio Body", text_color=text_color, 
+                     bgcolor=label_color, text_halign=text.align_center)
+        table.cell(unifiedTable, 13, 3, str.tostring(body_ratio, "#.##"), text_color=text_color, 
+                     bgcolor=body_ratio>= 1 ? pos_color : neg_color, text_halign=text.align_center)
+        
+        table.cell(unifiedTable, 14, 3, "VIX: " + vix_status, text_color=color.yellow, 
+                     bgcolor=value_color, text_halign=text.align_center, text_size=size.tiny)
+        table.cell(unifiedTable, 15, 3, "SDEX: " + status_sdex, text_color=color.yellow, 
+                     bgcolor=value_color, text_halign=text.align_center, text_size=size.tiny)
+
+//
+//Frecce posizioni
+export drawArrowsAndTable(float simulato_level, float simulato_lower_target_tupla, float simulato_higher_target_tupla, int sentiment_level, string market_buy_pattern, float old_sup) =>
+    // Dichiara variabili per memorizzare le linee
+    var line arrow_to_entry = na
+    var line arrow_to_target1 = na
+    var line arrow_to_target2 = na
+    if barstate.isconfirmed
+        // Cancella le frecce precedenti
+        line.delete(arrow_to_entry)
+        line.delete(arrow_to_target1)
+        line.delete(arrow_to_target2)
+        if market_buy_pattern != "No Buy Pattern" or (market_buy_pattern == "No Buy Pattern" and not na(old_sup))
+            color_target_1 = sentiment_level < 7 ? color.green : color.red
+            color_target_2 = sentiment_level < 7 ? color.red : color.green
+            // Crea nuove frecce
+            arrow_to_entry := line.new(bar_index+3, close, bar_index + 7, simulato_level, 
+                 color=color.red, width=1, style=line.style_arrow_right, force_overlay = true)
+            x_split = bar_index + 7
+            
+            arrow_to_target1 := line.new(x_split, simulato_level, x_split + 3, simulato_lower_target_tupla, 
+                 color=color_target_1, width=1, style=line.style_arrow_right, force_overlay = true)
+            
+            arrow_to_target2 := line.new(x_split, simulato_level, x_split + 13, simulato_higher_target_tupla, 
+                 color=color_target_2, width=1, style=line.style_arrow_right, force_overlay = true)
+        // Creazione tabella
+        var table infoTable = table.new(position.bottom_left, 2, 6, 
+             bgcolor=color.new(color.black, 80),
+             border_width=1, border_color=color.gray)
+//
+//Check_buy_conditions 
+export check_buy_conditions(float upperStartPrice_lr, float upperEndPrice_lr, int bbars, float bot, float global_distance, int run, float val_level, float vah_level, float poc_level, float poc_second_level, float bot_liq, float actual_supporto, int lenght_ema) =>
+    var float interpol_max_up = na 
+    var float interpol_min_low = na 
+    var float ema_max_up = na 
+    var float ema_min_low = na 
+    var int ema_perc = na
+    
+    // Variabili di output
+    bool val_is_in_buy = false
+    bool vah_is_in_buy = false
+    bool poc_is_in_buy = false
+    bool poc_2_is_in_buy = false
+    bool bot_liq_is_in_buy = false
+    bool act_sup_is_in_buy = false
+    bool ema_over_lr = na 
+    
+    if barstate.isconfirmed or barstate.islastconfirmedhistory
+
+        bool ema_switch_up = na  
+        bool ema_switch_down = na 
+        int contatore_ema_switch_down = na 
+        float prezzo_interpolato_lr_start = na 
+
+
+        ema = ta.sma(close, lenght_ema)
+        ema_trend_up = ema > ema[1] 
+        ema_trend_down = ema < ema[1]  
+        ema_switch_up := ema_trend_down[1] and ema_trend_up 
+        ema_switch_down := ema_trend_up[1] and ema_trend_down 
+        
+        if ema_switch_up
+            interpol_max_up := na 
+            ema_max_up := na
+        
+        if ema_switch_down
+            interpol_min_low := na 
+            ema_min_low := na 
+            contatore_ema_switch_down := 0 
+        
+        if ema_trend_up 
+            if na(interpol_max_up)
+                interpol_max_up := close 
+            else if close > interpol_max_up
+                interpol_max_up := close
+            if na(ema_max_up)
+                ema_max_up := ema 
+            else if ema > ema_max_up
+                ema_max_up := ema 
+        
+        if ema_trend_down 
+            if na(interpol_min_low)
+                interpol_min_low := close 
+            else if close < interpol_min_low
+                interpol_min_low := close 
+            if na(ema_min_low)
+                ema_min_low := ema 
+            else if ema < ema_min_low
+                ema_min_low := ema 
+        
+        if not ema_switch_down
+            contatore_ema_switch_down += 1
+        
+        prezzo_interpolato_lr_start := upperStartPrice_lr + ((upperEndPrice_lr - upperStartPrice_lr) * (bbars - contatore_ema_switch_down) / bbars)
+
+        if not na(prezzo_interpolato_lr_start) and ema_switch_down
+            prezzo_interpolato_lr_start := na 
+        
+        ema_over_lr := (not na(prezzo_interpolato_lr_start) and interpol_max_up > prezzo_interpolato_lr_start)
+        ema_perc := math.round(((ema - bot) / global_distance) * 100)
+        
+        if run > 0
+            val_is_in_buy := ema_max_up > val_level and high[1] > val_level and low > val_level
+            vah_is_in_buy := ema_max_up > vah_level and high[1] > vah_level and low > vah_level
+            poc_is_in_buy := ema_max_up > poc_level and high[1] > poc_level and low > poc_level
+            poc_2_is_in_buy := ema_max_up > poc_second_level and high[1] > poc_second_level and low > poc_second_level
+            bot_liq_is_in_buy := ema_max_up > bot_liq and high[1] > bot_liq and low > bot_liq
+            act_sup_is_in_buy := ema_max_up > actual_supporto and high[1] > actual_supporto and actual_supporto == actual_supporto[1] and low > actual_supporto
+    
+    [val_is_in_buy, vah_is_in_buy, poc_is_in_buy, poc_2_is_in_buy, bot_liq_is_in_buy, act_sup_is_in_buy, ema_over_lr, ema_perc]
+
+
+
+
+
+// ═══════════════════════════════════════════════════════════════════
+// FUNZIONE BREAKOUT UP
+// ═══════════════════════════════════════════════════════════════════
+export breakoutUp(int run, bool up_breakout, float top, float poc_level, 
+                 float bot_in_up_break_out, float distanza_break_out_up,
+                 float distanza_break_out_up_post, float break_out_up_perc,
+                 float distanza_break_out_post_mom_up, float break_out_up_perc_mom,
+                 float break_out_up_top_perc, label vol_break_up_perc_mom_label,
+                 array<label> saved_labels, color positiveColor) =>
+    
+    // Variabili locali di ritorno
+    bool _up_breakout = up_breakout
+    float _distanza_break_out_up_post = distanza_break_out_up_post
+    float _break_out_up_perc = break_out_up_perc
+    float _distanza_break_out_post_mom_up = distanza_break_out_post_mom_up
+    float _break_out_up_perc_mom = break_out_up_perc_mom
+    float _break_out_up_top_perc = break_out_up_top_perc
+    label _vol_break_up_perc_mom_label = vol_break_up_perc_mom_label
+    
+    if run > 0
+        breakout_bar_index_up = ta.valuewhen(high == top, bar_index, 0)
+        
+        // Chiusura breakout
+        if _up_breakout and low < poc_level
+            _distanza_break_out_up_post := top - bot_in_up_break_out
+            _break_out_up_perc := ((_distanza_break_out_up_post - distanza_break_out_up) / distanza_break_out_up) * 100
+            _up_breakout := false 
+            
+            label break_out_up_perc_label = label.new(breakout_bar_index_up, top, 
+                 "Break_out: " + str.tostring(_break_out_up_perc, "#.##") + "%", 
+                 color=positiveColor, style=label.style_label_down, 
+                 textcolor=color.white, size=size.small, force_overlay=true)
+            array.push(saved_labels, break_out_up_perc_label)
+        
+        label.delete(_vol_break_up_perc_mom_label)
+        
+        // Breakout attivo
+        if _up_breakout
+            _distanza_break_out_post_mom_up := top - bot_in_up_break_out
+            _break_out_up_perc_mom := ((_distanza_break_out_post_mom_up - distanza_break_out_up) / distanza_break_out_up) * 100
+            _break_out_up_top_perc := math.max(_break_out_up_perc_mom, break_out_up_perc_mom[1])
+            
+            _vol_break_up_perc_mom_label := label.new(bar_index + 43, top, 
+                 text="Break: " + str.tostring(math.round_to_mintick(_break_out_up_perc_mom)) + "%",
+                 style=label.style_label_down, color=na, 
+                 textcolor=positiveColor, force_overlay=true)
+        
+        // Reset quando non in breakout
+        if not _up_breakout and not na(_break_out_up_top_perc)
+            _break_out_up_top_perc := na
+    
+    // Ritorna tutte le variabili modificate
+    [_up_breakout, _distanza_break_out_up_post, _break_out_up_perc, 
+     _distanza_break_out_post_mom_up, _break_out_up_perc_mom, 
+     _break_out_up_top_perc, _vol_break_up_perc_mom_label]
+
+// ═══════════════════════════════════════════════════════════════════
+// FUNZIONE BREAKOUT DOWN
+// ═══════════════════════════════════════════════════════════════════
+export breakoutDown(int run, bool down_breakout, float bot, float poc_level,
+                     float top_in_down_break_out, float distanza_break_out_down,
+                     float distanza_break_out_down_post, float break_out_down_perc,
+                     float distanza_break_out_post_mom_down, float break_out_down_perc_mom,
+                     float break_out_down_top_perc, label vol_break_down_perc_mom_label,
+                     array<label> saved_labels) =>
+    
+    // Variabili locali di ritorno
+    bool _down_breakout = down_breakout
+    float _distanza_break_out_down_post = distanza_break_out_down_post
+    float _break_out_down_perc = break_out_down_perc
+    float _distanza_break_out_post_mom_down = distanza_break_out_post_mom_down
+    float _break_out_down_perc_mom = break_out_down_perc_mom
+    float _break_out_down_top_perc = break_out_down_top_perc
+    label _vol_break_down_perc_mom_label = vol_break_down_perc_mom_label
+    int breakout_bar_index_down = na
+    
+    if run > 0
+        breakout_bar_index_down := ta.valuewhen(low == bot, bar_index, 0)
+        
+        // Chiusura breakout
+        if _down_breakout and high > poc_level
+            _distanza_break_out_down_post := top_in_down_break_out - bot
+            _break_out_down_perc := ((_distanza_break_out_down_post - distanza_break_out_down) / distanza_break_out_down) * 100
+            _down_breakout := false 
+            
+            label break_out_down_perc_label = label.new(breakout_bar_index_down, bot, 
+                 "Break_out: " + str.tostring(_break_out_down_perc, "#.##") + "%", 
+                 color=color.blue, style=label.style_label_up, 
+                 textcolor=color.white, size=size.small, force_overlay=true)
+            array.push(saved_labels, break_out_down_perc_label)
+        
+        label.delete(_vol_break_down_perc_mom_label)
+        
+        // Breakout attivo
+        if _down_breakout
+            _distanza_break_out_post_mom_down := top_in_down_break_out - bot
+            _break_out_down_perc_mom := ((_distanza_break_out_post_mom_down - distanza_break_out_down) / distanza_break_out_down) * 100
+            _break_out_down_top_perc := math.max(_break_out_down_perc_mom, break_out_down_perc_mom[1])
+            
+            _vol_break_down_perc_mom_label := label.new(bar_index + 43, bot, 
+                 text="Break: " + str.tostring(math.round_to_mintick(_break_out_down_perc_mom)) + "%",
+                 style=label.style_label_up, color=na, 
+                 textcolor=color.red, force_overlay=true)
+        
+        // Reset quando non in breakout
+        if not _down_breakout and not na(_break_out_down_top_perc)
+            _break_out_down_top_perc := na
+    
+    // Ritorna tutte le variabili modificate
+    [_down_breakout, _distanza_break_out_down_post, _break_out_down_perc,
+     _distanza_break_out_post_mom_down, _break_out_down_perc_mom,
+     _break_out_down_top_perc, _vol_break_down_perc_mom_label]
