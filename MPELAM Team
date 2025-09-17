@@ -12,7 +12,7 @@ indicator('Volume Logic Trading Assistant (Buy)', max_bars_back = 5000,max_boxes
 
 // Var & Library 
 // -----------------------------------------------------------{
-import MPELAM/Logic_Trade_Bot_Library_BUY/2 as M2  
+import MPELAM/Logic_Trade_Bot_Library_BUY/5 as M2  
     // TIMEFRAME E ANALISI TEMPORALE
 // ═══════════════════════════════════════════════════════════════════════════════════════{
 var string current_timeframe = timeframe.period
@@ -35,7 +35,7 @@ var int contatore = 0            // Contatore barre aggiuntive per ancorare il g
 var int cnum = 100               // Numero canali volume profilo
 var int original_bbars_old = original_bbars - 1 // Backup bbars precedente
 var float incremento_resistenze_pivot = 1.1     // Moltiplicatore distanza resistenze
-var float min_0_3 = timeframe_level <= 1 ? close / 100 * 0.33 : timeframe_level <= 3 ? close /100 : close / 100 * 2 // Distanza minima posizioni cover
+var float min_0_3 = timeframe_level <= 1 ? close / 100 * 0.66 : timeframe_level <= 3 ? close /100 : close / 100 * 2 // Distanza minima posizioni cover
 var int counting = 0 // Iterazione di inizializzazione
 var int first_distance_va = 0    // Distanza di Fibonacci tra le fasce VA
 var string regime = na           // Indica il regime di mercato CMF
@@ -685,43 +685,32 @@ if barstate.islastconfirmedhistory
                 break
 //
 M2.clean_labels(saved_labels) //Pulizia label in eccesso
-if run > 0
-    breakout_bar_index_up               = ta.valuewhen(high == top, bar_index, 0)
-    if up_breakout and low < poc_level
-        distanza_break_out_up_post := top - bot_in_up_break_out
-        break_out_up_perc := ((distanza_break_out_up_post - distanza_break_out_up) / distanza_break_out_up) * 100
-        up_breakout := false 
-        label break_out_up_perc_label   = label.new(breakout_bar_index_up, top, "Break_out: " + str.tostring(break_out_up_perc, "#.##") + "%", 
-             color = positiveColor, style =label.style_label_down, textcolor =color.white, size = size.small, force_overlay = true)
-        array.push(saved_labels, break_out_up_perc_label)
-    label.delete(vol_break_up_perc_mom_label)
-    if up_breakout
-        distanza_break_out_post_mom_up := top - bot_in_up_break_out
-        break_out_up_perc_mom := ((distanza_break_out_post_mom_up - distanza_break_out_up) / distanza_break_out_up) * 100
-        break_out_up_top_perc := math.max(break_out_up_perc_mom, break_out_up_perc_mom[1])
-        vol_break_up_perc_mom_label := label.new(bar_index + 43 , top, text = "Break: " + str.tostring(math.round_to_mintick(break_out_up_perc_mom)) + "%",
-                              style = label.style_label_down, color = na, textcolor = positiveColor, force_overlay = true)
-    if not up_breakout and not na (break_out_up_top_perc)
-        break_out_up_top_perc := na 
-// Una collezione per mantenere le label di breakout
+// Chiamata per UP breakout
+[up_breakout_, distanza_break_out_up_post_, break_out_up_perc_, distanza_break_out_post_mom_up_, break_out_up_perc_mom_, break_out_up_top_perc_, vol_break_up_perc_mom_label_] = M2.breakoutUp(run, up_breakout, top, poc_level, bot_in_up_break_out, 
+                 distanza_break_out_up, distanza_break_out_up_post, break_out_up_perc,
+                 distanza_break_out_post_mom_up, break_out_up_perc_mom, 
+                 break_out_up_top_perc, vol_break_up_perc_mom_label, 
+                 saved_labels, positiveColor)
+// Chiamata per DOWN breakout  
+[down_breakout_, distanza_break_out_down_post_, break_out_down_perc_,distanza_break_out_post_mom_down_, break_out_down_perc_mom_,break_out_down_top_perc_, vol_break_down_perc_mom_label_] = M2.breakoutDown(run, down_breakout, bot, poc_level, top_in_down_break_out,
+                 distanza_break_out_down, distanza_break_out_down_post, break_out_down_perc,
+                 distanza_break_out_post_mom_down, break_out_down_perc_mom,
+                 break_out_down_top_perc, vol_break_down_perc_mom_label, saved_labels)
 if run > 0 
-    breakout_bar_index_down             := ta.valuewhen(low == bot, bar_index, 0)
-    if down_breakout and high > poc_level
-        distanza_break_out_down_post := top_in_down_break_out - bot
-        break_out_down_perc := ((distanza_break_out_down_post - distanza_break_out_down) / distanza_break_out_down) * 100
-        down_breakout := false 
-        label break_out_down_perc_label = label.new(breakout_bar_index_down, bot, "Break_out: " + str.tostring(break_out_down_perc, "#.##") + "%", 
-             color =color.blue, style =label.style_label_up, textcolor =color.white, size =size.small, force_overlay = true)
-        array.push(saved_labels, break_out_down_perc_label) 
-    label.delete(vol_break_down_perc_mom_label)
-    if down_breakout
-        distanza_break_out_post_mom_down := top_in_down_break_out - bot
-        break_out_down_perc_mom := ((distanza_break_out_post_mom_down - distanza_break_out_down) / distanza_break_out_down) * 100
-        break_out_down_top_perc := math.max(break_out_down_perc_mom, break_out_down_perc_mom[1])
-        vol_break_down_perc_mom_label := label.new(bar_index + 43, bot, text = "Break: " + str.tostring(math.round_to_mintick(break_out_down_perc_mom)) + "%",
-                              style = label.style_label_up, color = na , textcolor = color.red, force_overlay = true)
-    if not down_breakout and not na (break_out_down_top_perc)
-        break_out_down_top_perc         := na 
+    up_breakout                     := up_breakout_
+    down_breakout                   := down_breakout_
+    distanza_break_out_up_post      := distanza_break_out_up_post_      
+    break_out_up_perc               := break_out_up_perc_               
+    distanza_break_out_post_mom_up  := distanza_break_out_post_mom_up_      
+    break_out_up_perc_mom           := break_out_up_perc_mom_           
+    break_out_up_top_perc           := break_out_up_top_perc_               
+    vol_break_up_perc_mom_label     := vol_break_up_perc_mom_label_             
+    distanza_break_out_down_post    := distanza_break_out_down_post_            
+    break_out_down_perc             := break_out_down_perc_                 
+    distanza_break_out_post_mom_down:= distanza_break_out_post_mom_down_            
+    break_out_down_perc_mom         := break_out_down_perc_mom_             
+    break_out_down_top_perc         := break_out_down_top_perc_             
+    vol_break_down_perc_mom_label   := vol_break_down_perc_mom_label_           
     //
 // -------------------------------------}
 // -------------------------------------}
@@ -730,6 +719,7 @@ if run > 0
 // -----------------------------------------------------------{
     //Reset allarme Mid e setting iniziale
     // -----------------------------------------------------------{
+var bool first_is_mid = false
 if close_alarm_mid 
     close_alarm_mid := false 
     scenario_val_to_higher_line := 0, scenario_val_to_higher_ask := 0, scenario_vah_to_bot_target_line := 0, scenario_vah_to_bot_target_ask := 0
@@ -758,29 +748,31 @@ check_peak_levels() =>
 var float scenario_siffredi_close_perc = na
 var float actual_supporto_poc_level = na 
 var int actual_supporto_poc_perc = na 
+var float hide_mid_ask = na 
+
 if barstate.islast and run > 0
     mid_ask_perc := not na(mid_ask) ? math.round((mid_ask - bot) / ((top - bot) * 100)) : na 
     var int n_posizione = na
     //Trig di apertura
     val_trig_base_act = (
-             (high[1] >= val_level and low <= val_level) or (high_perc >= val_perc and low_perc <= val_perc and timeframe_level <= 1) or
-             (low[1] >= val_level and low <= val_level) or (low_perc >= val_perc and low_perc <= val_perc and timeframe_level <= 1))    
+             (high[1] >= val_level and low <= val_level) or (high_perc >= val_perc and low_perc <= val_perc and timeframe_level <= 2) or
+             (low[1] >= val_level and low <= val_level) or (low_perc >= val_perc and low_perc <= val_perc and timeframe_level <= 2))    
              and stable_box and val_is_in_buy
     vah_trig_base_act = (
-             (high[1] >= vah_level and low <= vah_level) or (high_perc >= vah_perc and low_perc <= vah_perc and timeframe_level <= 1) or
-             (low[1] >= vah_level and low <= vah_level) or (low_perc >= vah_perc and low_perc <= vah_perc and timeframe_level <= 1))    
+             (high[1] >= vah_level and low <= vah_level) or (high_perc >= vah_perc and low_perc <= vah_perc and timeframe_level <= 2) or
+             (low[1] >= vah_level and low <= vah_level) or (low_perc >= vah_perc and low_perc <= vah_perc and timeframe_level <= 2))    
              and stable_box and vah_is_in_buy
     poc_trig_base_act = (
-             (high[1] >= poc_level and low <= poc_level) or(high_perc >= poc_perc and low_perc <= poc_perc and timeframe_level <= 1) or
-             (low[1] >= poc_level and low <= poc_level) or (low_perc >= poc_perc and low_perc <= poc_perc and timeframe_level <= 1)) 
+             (high[1] >= poc_level and low <= poc_level) or(high_perc >= poc_perc and low_perc <= poc_perc and timeframe_level <= 2) or
+             (low[1] >= poc_level and low <= poc_level) or (low_perc >= poc_perc and low_perc <= poc_perc and timeframe_level <= 2)) 
              and stable_box and poc_is_in_buy
     poc_2_trig_base_act = (
-             (high[1] >= poc_second_level and low <= poc_second_level) or (high_perc >= poc_2_perc and low_perc <= poc_2_perc and timeframe_level <= 1) or
-             (low[1] >= poc_second_level and low <= poc_second_level) or (low_perc >= poc_2_perc and low_perc <= poc_2_perc and timeframe_level <= 1)) 
+             (high[1] >= poc_second_level and low <= poc_second_level) or (high_perc >= poc_2_perc and low_perc <= poc_2_perc and timeframe_level <= 2) or
+             (low[1] >= poc_second_level and low <= poc_second_level) or (low_perc >= poc_2_perc and low_perc <= poc_2_perc and timeframe_level <= 2)) 
              and stable_box and poc_2_is_in_buy
     bot_liq_trig = (
-             (high[1] >= bot_liq and low <= bot_liq) or (high_perc >= bot_liq_perc and low_perc <= bot_liq_perc and timeframe_level <= 1) or
-             (low[1] >= bot_liq and low <= bot_liq)  or (low_perc >= bot_liq_perc and low_perc <= bot_liq_perc and timeframe_level <= 1))
+             (high[1] >= bot_liq and low <= bot_liq) or (high_perc >= bot_liq_perc and low_perc <= bot_liq_perc and timeframe_level <= 2) or
+             (low[1] >= bot_liq and low <= bot_liq)  or (low_perc >= bot_liq_perc and low_perc <= bot_liq_perc and timeframe_level <= 2))
              and stable_box and bot_liq_is_in_buy
     poc_2_trig_break_act = poc_2_trig_base_act and low_perc < lower_lr_perc 
     old_sup_trig = (low[1] > old_sup[1] and low <= old_sup[1]) or (low[1] > old_sup and low <= old_sup)
@@ -809,6 +801,7 @@ if barstate.islast and run > 0
     any_trig_close = (low[1] < val_level and high > val_level) or (low[1] < vah_level and high > vah_level) or
          (low[1] < poc_level and high > poc_level ) or (low[1] < poc_second_level and high > poc_second_level) or
          (low[1] < top_liq and high > top_liq) or check_peak_levels()        
+    int hide_mid_ask_perc = not na(hide_mid_ask) ? math.round((hide_mid_ask - bot) / ((top - bot) * 100)) : na 
     // -------------------------------------}
     // Buy Break out ID 13 - 23
     // -----------------------------------------------------------{
@@ -821,7 +814,7 @@ if barstate.islast and run > 0
                              market_buy_pattern == "Siffredi" and na(siffredi_ask) and siffredi_fatta and not na(scenario_siffredi_close_perc) ? ((vah_trig_base_act and vah_perc < scenario_siffredi_close_perc -5) or (bot_liq_trig and bot_liq_perc < scenario_siffredi_close_perc -5) or (poc_2_trig_base_act and poc_2_perc < scenario_siffredi_close_perc -5) or (poc_trig_base_act and poc_perc < scenario_siffredi_close_perc -5) or (val_trig_base_act and val_perc < scenario_siffredi_close_perc -5))  : 
                              market_buy_pattern == "Siffredi look for break" and na(siffredi_ask) and siffredi_fatta and not na(scenario_siffredi_close_perc -5) ? ((poc_trig_base_act and poc_perc < scenario_siffredi_close_perc -5) or (val_trig_base_act and val_perc < scenario_siffredi_close_perc -5) or (bot_liq_trig and bot_liq_perc < scenario_siffredi_close_perc -5)) : false
     //
-    if scenario_break_out and open_position_mid == 0 and tot_position_scenario_bot == 0 and scenario_break_out_line == 0
+    if scenario_break_out and open_position_mid == 0 and tot_position_scenario_bot == 0 and scenario_break_out_line == 0 and not down_breakout
         n_posizione := 13
         alert(str.format("{0} \"data\": {1} \"secret\": \"\", \"timeframe\": \"{2}\", \"real\": {3}, \"action\": \"{4}\", \"id\": \"{5}\", \"timenow\": {6}, \"data\": {7} 
          \"epic\": \"{8}\", \"direction\": \"{9}\", \"size\": {10} {11} {12} {13}", "{", "{", current_timeframe, "true", "OPEN", str.tostring(n_posizione), 
@@ -833,12 +826,12 @@ if barstate.islast and run > 0
         label scenario_break = label.new(bar_index, low - (high - low), "scenario break", color=positiveColor,  style=label.style_label_up, textcolor=color.white, size=size.small, force_overlay = true)
         array.push(saved_labels, scenario_break)
     //
-    if scenario_break_out_line == 1 and scenario_break_out_line[1] == 1 and chiusura_scenario_break_fib_4 and high > scenario_break_out_ask        
+    if scenario_break_out_line == 1 and scenario_break_out_line[1] == 1 and chiusura_scenario_break_fib_4 and high > scenario_break_out_ask and na(siffredi_ask)       
         n_posizione := 13
         alert(str.format("{0} \"data\": {1} \"secret\": \"\", \"timeframe\": \"{2}\", \"real\": {3}, \"action\": \"{4}\", \"id\": \"{5}\", \"timenow\":{6}, 
          \"epic\": \"{7}\" {8} {9}", "{", "{", current_timeframe, "true", "CLOSE", str.tostring(n_posizione), str.tostring(timenow), titolo, "}", "}"), alert.freq_once_per_bar)
         break_ask := na, break_start_perc := na,
-        scenario_break_out_ask := 0, scenario_break_out_line  := 0
+        scenario_break_out_ask := 0, scenario_break_out_line  := 0, hide_mid_ask := na
         label close_res = label.new(bar_index, high, "close scenario break", color=negativeColor, style=label.style_label_down, textcolor=color.white, size=size.small, force_overlay = true)
         array.push(saved_labels, close_res)
     // 
@@ -880,13 +873,14 @@ if barstate.islast and run > 0
     // -----------------------------------------------------------{
     var bool scenario_poc_2_to_bot_target = false 
     scenario_poc_2_to_bot_target := market_buy_pattern == "Poc 2 Buy Fig" ? poc_2_trig_base_act : false 
-    if scenario_poc_2_to_bot_target and open_position_mid == 0 and tot_position_scenario_bot == 0 and open_position_break == open_position_break[1]
+    if scenario_poc_2_to_bot_target and open_position_mid == 0 and tot_position_scenario_bot == 0 and open_position_break == open_position_break[1] and not down_breakout and ((poc_2_perc < (hide_mid_ask_perc - 23 + (timeframe_level*2))) or na(hide_mid_ask_perc))
         if scenario_break_out_line == 0
             open_13 := true 
             scenario_break_out_line := 1
             scenario_break_out_ask := poc_second_level + spread 
             break_ask := scenario_break_out_ask
             break_start_perc := (scenario_break_out_ask - bot) / ((top - bot) * 100)
+            hide_mid_ask := break_ask
         else
             open_12 := true
             scenario_poc_2_to_bot_target_line := 1, scenario_poc_2_to_bot_target_ask  := poc_second_level + spread 
@@ -907,13 +901,14 @@ if barstate.islast and run > 0
     // -----------------------------------------------------------{
     var bool scenario_poc_to_bot_target = false 
     scenario_poc_to_bot_target := market_buy_pattern == "Poc Buy Fig" ? poc_trig_base_act : false 
-    if scenario_poc_to_bot_target and open_position_mid == 0 and tot_position_scenario_bot == 0 and open_position_break == open_position_break[1] 
+    if scenario_poc_to_bot_target and open_position_mid == 0 and tot_position_scenario_bot == 0 and open_position_break == open_position_break[1] and not down_breakout and ((poc_perc < (hide_mid_ask_perc - 23 + (timeframe_level*2))) or na(hide_mid_ask_perc))
         if scenario_break_out_line == 0
             open_13 := true 
             scenario_break_out_line := 1
             scenario_break_out_ask := poc_level + spread 
             break_ask := scenario_break_out_ask
             break_start_perc := (scenario_break_out_ask - bot) / ((top - bot) * 100)
+            hide_mid_ask := break_ask
         else
             open_12 := true
             scenario_poc_to_bot_target_line := 1, scenario_poc_to_bot_target_ask  := poc_level + spread 
@@ -934,13 +929,14 @@ if barstate.islast and run > 0
     // -----------------------------------------------------------{
     var bool scenario_val_to_bot_target = false 
     scenario_val_to_bot_target := market_buy_pattern == "Val Buy Fig" ? val_trig_base_act : false 
-    if scenario_val_to_bot_target and open_position_mid == 0 and tot_position_scenario_bot == 0 and open_position_break == open_position_break[1]
+    if scenario_val_to_bot_target and open_position_mid == 0 and tot_position_scenario_bot == 0 and open_position_break == open_position_break[1] and not down_breakout and ((val_perc < (hide_mid_ask_perc - 23 + (timeframe_level*2))) or na(hide_mid_ask_perc))
         if scenario_break_out_line == 0
             open_13 := true 
             scenario_break_out_line := 1
             scenario_break_out_ask := val_level + spread 
             break_ask := scenario_break_out_ask
             break_start_perc := (scenario_break_out_ask - bot) / ((top - bot) * 100)
+            hide_mid_ask := break_ask
         else
             open_12 := true
             scenario_val_to_bot_target_line := 1, scenario_val_to_bot_target_ask := val_level + spread 
@@ -961,13 +957,14 @@ if barstate.islast and run > 0
     // -----------------------------------------------------------{
     var bool scenario_vah_to_bot_target = false 
     scenario_vah_to_bot_target := market_buy_pattern == "Vah Buy Fig" ? vah_trig_base_act : false 
-    if scenario_vah_to_bot_target and open_position_mid == 0 and tot_position_scenario_bot == 0 and open_position_break == open_position_break[1]
+    if scenario_vah_to_bot_target and open_position_mid == 0 and tot_position_scenario_bot == 0 and open_position_break == open_position_break[1] and not down_breakout and ((vah_perc < (hide_mid_ask_perc - 23 + (timeframe_level*2))) or na(hide_mid_ask_perc))
         if scenario_break_out_line == 0
             open_13 := true 
             scenario_break_out_line := 1
             scenario_break_out_ask := vah_level + spread 
             break_ask := scenario_break_out_ask
             break_start_perc := (scenario_break_out_ask - bot) / ((top - bot) * 100)
+            hide_mid_ask := break_ask
         else
             open_12 := true
             scenario_vah_to_bot_target_line := 1, scenario_vah_to_bot_target_ask := vah_level + spread 
@@ -991,8 +988,10 @@ if barstate.islast and run > 0
         alert(str.format("{0} \"data\": {1} \"secret\": \"\", \"timeframe\": \"{2}\", \"real\": {3}, \"action\": \"{4}\", \"id\": \"{5}\", \"timenow\": {6}, \"data\": {7} 
          \"epic\": \"{8}\", \"direction\": \"{9}\", \"size\": {10} {11} {12} {13}", "{", "{", current_timeframe, "true", "OPEN", str.tostring(n_posizione), 
          str.tostring(timenow), "{", titolo, "BUY", n_titoli_moltiplicatore_mid, "}", "}", "}"), alert.freq_once_per_bar)
+    first_is_mid := false 
     if open_13
         n_posizione := 13
+        first_is_mid := true
         alert(str.format("{0} \"data\": {1} \"secret\": \"\", \"timeframe\": \"{2}\", \"real\": {3}, \"action\": \"{4}\", \"id\": \"{5}\", \"timenow\": {6}, \"data\": {7} 
          \"epic\": \"{8}\", \"direction\": \"{9}\", \"size\": {10} {11} {12} {13}", "{", "{", current_timeframe, "true", "OPEN", str.tostring(n_posizione), 
          str.tostring(timenow), "{", titolo, "BUY", n_titoli_moltiplicatore_mid, "}", "}", "}"), alert.freq_once_per_bar)
@@ -1006,7 +1005,7 @@ if barstate.islast and run > 0
     //Conteggio posizioni e gestione secondaria dei livelli di target 
     // -----------------------------------------------------------{
     open_position_mid := scenario_val_to_higher_line + scenario_poc_to_bot_target_line + scenario_val_to_bot_target_line + scenario_vah_to_bot_target_line + scenario_poc_2_to_bot_target_line
-    mid_just_open = open_position_mid > open_position_mid[1] 
+    mid_just_open = open_position_mid > open_position_mid[1] or (first_is_mid and not first_is_mid[1])
     mid_ask_perc := not na(mid_ask) ? math.round((mid_ask - bot) / ((top - bot) * 100)) : na 
     // -------------------------------------}
     // Buy Logic Bot
@@ -1015,7 +1014,7 @@ if barstate.islast and run > 0
     // -----------------------------------------------------------{
     scenario_actual_over_bot = actual_support_over_bot_perc < lower_lr_perc and actual_supporto > bot and bot_is_sup and low[1] > actual_supporto_poc_level and low < actual_supporto_poc_level and act_sup_is_in_buy and (actual_supporto < mid_ask or na(mid_ask)) and tot_position_scenario_bot == 0 and not cover_1_line
     // Apertura
-    if scenario_actual_over_bot and open_position_break == 0 and not mid_just_open and tot_position_scenario_bot == 0 
+    if scenario_actual_over_bot and open_position_break == 0 and not mid_just_open and tot_position_scenario_bot == 0 and not down_breakout 
         n_posizione := 11
         alert(str.format("{0} \"data\": {1} \"secret\": \"\", \"timeframe\": \"{2}\", \"real\": {3}, \"action\": \"{4}\", \"id\": \"{5}\", \"timenow\": {6}, \"data\": {7} 
          \"epic\": \"{8}\", \"direction\": \"{9}\", \"size\": {10} {11} {12} {13}", "{", "{", current_timeframe, "true", "OPEN", str.tostring(n_posizione), 
@@ -1037,6 +1036,10 @@ if barstate.islast and run > 0
     // -------------------------------------}
         // Attivazione scenari bot
     // -------------------------------------{
+    var float cover_1_ask = na 
+    var float cover_2_ask = na 
+    var float cover_3_ask = na 
+    var float cover_4_ask = na 
     scenario_bot   = bot_liq_trig and bot_is_sup and not scenario_bot_line and not scenario_bot_2_line and not cover_1_line[1]
     scenario_bot_down = low < bot[1]
     scenario_bot_down_start = scenario_bot_down and ((bot_is_sup[1] and not scenario_bot_line and not scenario_bot_2_line ))
@@ -1051,26 +1054,40 @@ if barstate.islast and run > 0
         first_bot_liq := bot_liq, first_bot := old_sup
         supporto_1 := not na(old_sup_1) ? old_sup_1 : na, supporto_2 := not na(old_sup_2) ? old_sup_2 : na, supporto_3 := not na(old_sup_3) ? old_sup_3 : na
     // Incremento dei supporti in caso di pericolosità del mercato crescente
-    if tot_position_scenario_bot > 0 and incremento_distanza_pivot != incremento_distanza_pivot[1]
-        supporto_1 := na, supporto_2 := na, supporto_3 := na, supporto_4 := na
+    if tot_position_cover > 0 and incremento_distanza_pivot >= incremento_distanza_pivot[1]
+        supporto_1 := bot, supporto_2 := na, supporto_3 := na, supporto_4 := na
         array.sort(a_sup, order.descending)  // Ordine decrescente per supporti
-        for i = 0 to array.size(a_sup) - 1
-            supporto_1 := (array.get(a_sup, i) < (first_bot - piv_distance[1]) and array.get(a_sup, i) < supporto_1[1] and not na(supporto_1[1])) ? array.get(a_sup, i) : na
-        if not na(supporto_1)
+        if not cover_2_line
             for i = 0 to array.size(a_sup) - 1
-                supporto_2 := (array.get(a_sup, i) < (supporto_1 - piv_distance_1[1]) and array.get(a_sup, i) < supporto_2[1] and not na(supporto_2[1])) ? array.get(a_sup, i) : na
-        if not na(supporto_2) 
+                prezzo = array.get(a_sup, i)
+                supporto_2 := (prezzo < (cover_1_ask - piv_distance_1)) and prezzo < low[1] ? prezzo : na
+            if not na(supporto_2) 
+                for i = 0 to array.size(a_sup) - 1
+                    prezzo = array.get(a_sup, i)
+                    supporto_3 := (prezzo < (supporto_2 - piv_distance_2)) and prezzo < low[1] ? prezzo : na
+            if not na(supporto_3)
+                for i = 0 to array.size(a_sup) - 1
+                    prezzo = array.get(a_sup, i)
+                    supporto_4 := (prezzo < (supporto_3 - piv_distance_3)) and prezzo < low[1]  ? prezzo : na
+        else if not cover_3_line
             for i = 0 to array.size(a_sup) - 1
-                supporto_3 := (array.get(a_sup, i) < (supporto_2 - piv_distance_2[1]) and array.get(a_sup, i) < supporto_3[1] and not na(supporto_3[1])) ? array.get(a_sup, i) : na
-        if not na(supporto_3)
+                prezzo = array.get(a_sup, i)
+                supporto_3 := (prezzo < (cover_2_ask - piv_distance_2)) and prezzo < low[1]  ? prezzo : na
+            if not na(supporto_3)
+                for i = 0 to array.size(a_sup) - 1
+                    prezzo = array.get(a_sup, i)
+                    supporto_4 := (prezzo < (supporto_3 - piv_distance_3)) and prezzo < low[1]  ? prezzo : na
+        else if not cover_4_line
             for i = 0 to array.size(a_sup) - 1
-                supporto_4 := (array.get(a_sup, i) < (supporto_3 - piv_distance_3[1]) and array.get(a_sup, i) < supporto_4[1] and not na(supporto_4[1])) ? array.get(a_sup, i) : na
+                prezzo = array.get(a_sup, i)
+                supporto_4 := (prezzo < (cover_3_ask - piv_distance_3)) and prezzo < low[1]  ? prezzo : na
         //
+    hide_mid_ask_perc := not na(hide_mid_ask) ? math.round((hide_mid_ask - bot) / ((top - bot) * 100)) : na 
     // -------------------------------------}
         //Iterazioni quando bot_is_sup  
     // -------------------------------------{
     if scenario_bot_line
-        if ((scenario_bot and ((bot_liq_perc < mid_ask_perc - 13) or na(mid_ask_perc))) or scenario_bot_down_start) and scenario_bot_line_to_l == 0 and scenario_actual_over_bot_line == 0 and not mid_just_open
+        if (((scenario_bot and ((bot_liq_perc < mid_ask_perc - 13) or na(mid_ask_perc)) and ((bot_liq_perc < (hide_mid_ask_perc - 23 + (timeframe_level*2))) or na(hide_mid_ask_perc))) or scenario_bot_down_start) and scenario_bot_line_to_l == 0 and scenario_actual_over_bot_line == 0 and not mid_just_open)            
             n_posizione := 1 
             alert(str.format("{0} \"data\": {1} \"secret\": \"\", \"timeframe\": \"{2}\", \"real\": {3}, \"action\": \"{4}\", \"id\": \"{5}\", \"timenow\": {6}, \"data\": {7} 
              \"epic\": \"{8}\", \"direction\": \"{9}\", \"size\": {10} {11} {12} {13}", "{", "{", current_timeframe, "true", "OPEN", str.tostring(n_posizione), 
@@ -1116,7 +1133,7 @@ if barstate.islast and run > 0
     // -------------------------------------{
     if scenario_bot_2_line 
         // Aperture
-        if (scenario_bot_2) and scenario_bot_line_to_l == 0 and scenario_actual_over_bot_line == 0 and not mid_just_open and ((bot_liq_perc < mid_ask_perc - 13) or na(mid_ask_perc)) 
+        if (scenario_bot_2) and scenario_bot_line_to_l == 0 and scenario_actual_over_bot_line == 0 and not mid_just_open and ((bot_liq_perc < mid_ask_perc - 13) or na(mid_ask_perc)) and ((bot_liq_perc < (hide_mid_ask_perc - 23 + (timeframe_level*2))) or na(hide_mid_ask_perc)) 
             n_posizione := 1
             alert(str.format("{0} \"data\": {1} \"secret\": \"\", \"timeframe\": \"{2}\", \"real\": {3}, \"action\": \"{4}\", \"id\": \"{5}\", \"timenow\": {6}, \"data\": {7} 
              \"epic\": \"{8}\", \"direction\": \"{9}\", \"size\": {10} {11} {12} {13}", "{", "{", current_timeframe, "true", "OPEN", str.tostring(n_posizione), 
@@ -1168,6 +1185,7 @@ if barstate.islast and run > 0
     //
     if close_break_fast
         n_posizione := 13
+        hide_mid_ask := na
         alert(str.format("{0} \"data\": {1} \"secret\": \"\", \"timeframe\": \"{2}\", \"real\": {3}, \"action\": \"{4}\", \"id\": \"{5}\", \"timenow\":{6}, 
          \"epic\": \"{7}\" {8} {9}", "{", "{", current_timeframe, "true", "CLOSE", str.tostring(n_posizione), str.tostring(timenow), titolo, "}", "}"), alert.freq_once_per_bar)
         break_ask := na, break_start_perc := na, scenario_break_out_ask := 0, scenario_break_out_line := 0, close_break_fast := false
@@ -1179,14 +1197,14 @@ if barstate.islast and run > 0
     // -------------------------------------{
     tot_position_scenario_bot := scenario_bot_line_to_l + scenario_bot_line_to_h 
     //Chiusura della line di scenario bot quando non ci sono operazioni aperte
-    if tot_position_scenario_bot == 0 and scenario_bot_line 
+    if tot_position_scenario_bot == 0 and scenario_bot_line and not cover_1_line
         scenario_bot_line := false 
         supporto_1 := na 
         supporto_2 := na 
         supporto_3 := na 
         supporto_4 := na 
     //
-    if tot_position_scenario_bot == 0 and scenario_bot_2_line
+    if tot_position_scenario_bot == 0 and scenario_bot_2_line and not cover_1_line
         scenario_bot_2_line := false 
         supporto_1 := na 
         supporto_2 := na 
@@ -1194,10 +1212,10 @@ if barstate.islast and run > 0
         supporto_4 := na 
     //            
     if scenario_bot_line or scenario_bot_2_line
-        supporto_cover_trig_1 := not na(supporto_1[1]) and low[1] > supporto_1[1] and low <= supporto_1[1] and not cover_2_line
-        supporto_cover_trig_2 := not na(supporto_2[1]) and low[1] > supporto_2[1] and low <= supporto_2[1] and not cover_3_line
-        supporto_cover_trig_3 := not na(supporto_3[1]) and low[1] > supporto_3[1] and low <= supporto_3[1] and not cover_4_line
-        supporto_cover_trig_4 := not na(supporto_4[1]) and low[1] > supporto_4[1] and low <= supporto_4[1]
+        supporto_cover_trig_1 := not na(supporto_1) and low[1] > supporto_1 and low <= supporto_1 and not cover_2_line
+        supporto_cover_trig_2 := not na(supporto_2) and low[1] > supporto_2 and low <= supporto_2 and not cover_3_line
+        supporto_cover_trig_3 := not na(supporto_3) and low[1] > supporto_3 and low <= supporto_3 and not cover_4_line
+        supporto_cover_trig_4 := not na(supporto_4) and low[1] > supporto_4 and low <= supporto_4
     //
     // -------------------------------------}
     // Cover Bot
@@ -1245,9 +1263,10 @@ if barstate.islast and run > 0
     // -------------------------------------{
     if supporto_cover_trig_1 
         cover_1_line := true 
+        cover_1_ask := supporto_1
     //Aperture
     if cover_1_line
-        if supporto_cover_trig_1 and scenario_cover_1_line_to_h == 0 and block_cover_open != "Cover 1" and block_cover != "H"
+        if supporto_cover_trig_1 and scenario_cover_1_line_to_h == 0 and block_cover_open != "Cover 1" and block_cover != "H" and not cover_1_line[1]
             n_posizione := 3
             alert(str.format("{0} \"data\": {1} \"secret\": \"\", \"timeframe\": \"{2}\", \"real\": {3}, \"action\": \"{4}\", \"id\": \"{5}\", \"timenow\": {6}, \"data\": {7} 
              \"epic\": \"{8}\", \"direction\": \"{9}\", \"size\": {10} {11} {12} {13}", "{", "{", current_timeframe, "true", "OPEN", str.tostring(n_posizione), 
@@ -1284,15 +1303,17 @@ if barstate.islast and run > 0
         tot_position_scenario_cover_1 := scenario_cover_1_line_to_l + scenario_cover_1_line_to_h
         if tot_position_scenario_cover_1 == 0 and cover_1_line //Chiusura della line di scenario bot quando non ci sono operazioni aperte
             cover_1_line := false 
+            cover_1_ask  := na
         //
     // -------------------------------------}
         //Posizione cover 2
     // -------------------------------------{
     if supporto_cover_trig_2 and (cover_1_line[1] or not cover_1_line) 
         cover_2_line := true 
+        cover_2_ask := supporto_2
     //Aperture
     if cover_2_line
-        if supporto_cover_trig_2 and scenario_cover_2_line_to_h == 0 and block_cover_open != "Cover 2" and block_cover != "H"
+        if supporto_cover_trig_2 and scenario_cover_2_line_to_h == 0 and block_cover_open != "Cover 2" and block_cover != "H" and not cover_2_line[1]
             n_posizione := 5
             alert(str.format("{0} \"data\": {1} \"secret\": \"\", \"timeframe\": \"{2}\", \"real\": {3}, \"action\": \"{4}\", \"id\": \"{5}\", \"timenow\": {6}, \"data\": {7} 
              \"epic\": \"{8}\", \"direction\": \"{9}\", \"size\": {10} {11} {12} {13}", "{", "{", current_timeframe, "true", "OPEN", str.tostring(n_posizione), 
@@ -1329,15 +1350,17 @@ if barstate.islast and run > 0
         tot_position_scenario_cover_2 := scenario_cover_2_line_to_l + scenario_cover_2_line_to_h
         if tot_position_scenario_cover_2 == 0 and cover_2_line //Chiusura della line di scenario bot quando non ci sono operazioni aperte
             cover_2_line := false 
+            cover_2_ask  := na
         //
     // -------------------------------------}
         //Posizione cover 3
     // -------------------------------------{
     if supporto_cover_trig_3 and (cover_2_line[1] or not cover_2_line) 
         cover_3_line := true 
+        cover_3_ask := supporto_3
     //Aperture
     if cover_3_line 
-        if supporto_cover_trig_3 and scenario_cover_3_line_to_h == 0 and block_cover_open != "Cover 3" and block_cover != "H"
+        if supporto_cover_trig_3 and scenario_cover_3_line_to_h == 0 and block_cover_open != "Cover 3" and block_cover != "H" and not cover_3_line[1]
             n_posizione := 7
             alert(str.format("{0} \"data\": {1} \"secret\": \"\", \"timeframe\": \"{2}\", \"real\": {3}, \"action\": \"{4}\", \"id\": \"{5}\", \"timenow\": {6}, \"data\": {7} 
              \"epic\": \"{8}\", \"direction\": \"{9}\", \"size\": {10} {11} {12} {13}", "{", "{", current_timeframe, "true", "OPEN", str.tostring(n_posizione), 
@@ -1374,15 +1397,17 @@ if barstate.islast and run > 0
         tot_position_scenario_cover_3 := scenario_cover_3_line_to_l + scenario_cover_3_line_to_h
         if tot_position_scenario_cover_3 == 0 and cover_3_line //Chiusura della line di scenario bot quando non ci sono operazioni aperte
             cover_3_line := false 
+            cover_3_ask  := na
         //
     // -------------------------------------}
         //Posizione cover 4
     // -------------------------------------{
     if supporto_cover_trig_4 and (cover_3_line[1] or not cover_3_line)
         cover_4_line := true 
+        cover_4_ask := supporto_4
     //Aperture
     if cover_4_line 
-        if supporto_cover_trig_4 and scenario_cover_4_line_to_h == 0 and block_cover_open != "Cover 4" and block_cover != "H"
+        if supporto_cover_trig_4 and scenario_cover_4_line_to_h == 0 and block_cover_open != "Cover 4" and block_cover != "H" and not cover_4_line[1]
             n_posizione := 9
             alert(str.format("{0} \"data\": {1} \"secret\": \"\", \"timeframe\": \"{2}\", \"real\": {3}, \"action\": \"{4}\", \"id\": \"{5}\", \"timenow\": {6}, \"data\": {7} 
              \"epic\": \"{8}\", \"direction\": \"{9}\", \"size\": {10} {11} {12} {13}", "{", "{", current_timeframe, "true", "OPEN", str.tostring(n_posizione), 
@@ -1419,6 +1444,7 @@ if barstate.islast and run > 0
         tot_position_scenario_cover_4 := scenario_cover_4_line_to_l + scenario_cover_4_line_to_h    
         if tot_position_scenario_cover_4 == 0 and cover_4_line //Chiusura della line di scenario bot quando non ci sono operazioni aperte
             cover_4_line := false 
+            cover_4_ask  := na
         //
     // -------------------------------------}
     // -------------------------------------}
@@ -1427,27 +1453,16 @@ if barstate.islast and run > 0
     tot_position_cover := tot_position_scenario_cover_1 + tot_position_scenario_cover_2 + tot_position_scenario_cover_3 + tot_position_scenario_cover_4 + scenario_siffredi_cover_line
     var int last_cover_open = 0
     last_cover_open := tot_position_scenario_cover_4 > 0 ? 4 : tot_position_scenario_cover_3 > 0 ? 3 : tot_position_scenario_cover_2 > 0 ? 2 : tot_position_scenario_cover_1 > 0 ? 1 : 0    
-    if tot_position_cover < tot_position_cover[1]
+    if last_cover_open < last_cover_open[1] and last_cover_open > 0
         if last_cover_open == 1 
-            supporto_1 := bot 
-            if bot_is_sup 
-                supporto_2 := old_sup, supporto_3 := old_sup_1, supporto_4 := old_sup_2 
-            else 
-                supporto_2 := old_sup_1, supporto_3 := old_sup_2, supporto_4 := old_sup_3 
+            supporto_2 := bot_liq 
+            supporto_3 := old_sup 
+            supporto_4 := old_sup_2
         else if last_cover_open == 2 
-            supporto_2 := bot 
-            if bot_is_sup 
-                supporto_3 := old_sup, supporto_4 := old_sup_1 
-            else 
-                supporto_3 := old_sup_1, supporto_4 := old_sup_2 
+            supporto_3 := bot_liq 
+            supporto_4 := old_sup_1
         else if last_cover_open == 3 
-            supporto_3 := bot 
-            if bot_is_sup 
-                supporto_4 := old_sup
-            else 
-                supporto_4 := old_sup_1 
-        else if last_cover_open == 4 
-            supporto_4 := bot 
+            supporto_4 := bot_liq 
     //
 // -------------------------------------}
 // -------------------------------------}
@@ -1505,76 +1520,6 @@ if (barstate.isconfirmed and run > 0 ) or (barstate.islastconfirmedhistory) or (
     // Aggiorno la percent reimpostandola con i valori iniziali per ripetere il monitoraggio senza valori estremi percent
     percent := percent_block
     // -------------------------------------}
-    // Miglioramento delle zone liq in base ai massimi volumetrici
-    // -----------------------------------------------------------{
-    // Bot liq
-    float new_bot_liq                   = bot_liq_shadow
-    // Trova l'indice di livello corrispondente a bot_liq
-    int bot_liq_index                   = 0
-    for i = 0 to cnum - 1
-        if array.get(levels, i) <= bot_liq_shadow and (i == cnum - 1 or array.get(levels, i + 1) > bot_liq_shadow)
-            bot_liq_index               := i
-            break
-    for i = bot_liq_index to 0 // Controlla le barre dall'alto verso il basso per trovare volume assente
-        if i < array.size(totalvols)
-            if array.get(totalvols, i) == 0
-                new_bot_liq             := array.get(levels, i)
-                bot_liq_modified        := true
-                bot_liq_index               := i
-                break
-    bot_liq := bot_liq_modified ? new_bot_liq : bot_liq_shadow
-    // Ottimizzazione aggiuntiva per bot_liq: sali fino al picco di volume
-    if bot_liq_index < cnum - 1 and bot_liq_index > 0
-        float max_vol = array.get(totalvols, bot_liq_index)
-        int max_index = bot_liq_index
-        for i = bot_liq_index + 1 to cnum - 1
-            float current_vol = array.get(totalvols, i)
-            if current_vol > max_vol
-                max_vol := current_vol
-                max_index := i
-                bot_liq := (array.get(levels, i) + array.get(levels, i + 1)) / 2
-                bot_liq_index               := i
-            else
-                break
-    // Top Liq
-    float new_top_liq = top_liq_shadow
-    // Trova l'indice di livello corrispondente a top_liq
-    int top_liq_index = cnum - 1
-    for i = 0 to cnum - 1
-        if array.get(levels, i) <= top_liq_shadow and (i == cnum - 1 or array.get(levels, i + 1) > top_liq_shadow)
-            top_liq_index := i
-            break
-    for i = top_liq_index to cnum - 1 // Controlla le barre dal basso verso l'alto per trovare volume assente
-        if i < array.size(totalvols)
-            if array.get(totalvols, i) == 0
-                new_top_liq := array.get(levels, i)
-                top_liq_modified := true
-                top_liq_index               := i
-                break
-    top_liq := top_liq_modified ? new_top_liq : top_liq_shadow
-    // Ottimizzazione aggiuntiva: scendi fino al picco di volume
-    int current_index = 0
-    for i = 0 to cnum - 1
-        if array.get(levels, i) <= top_liq and (i == cnum - 1 or array.get(levels, i + 1) > top_liq)
-            current_index := i
-            break
-    // Cerca il picco locale scendendo
-    if current_index > 0
-        float max_vol = array.get(totalvols, current_index)
-        int max_index = current_index
-        for i = current_index - 1 to 0
-            float current_vol = array.get(totalvols, i)
-            if current_vol > max_vol
-                max_vol := current_vol
-                max_index := i
-                top_liq := (array.get(levels, i) + array.get(levels, i + 1)) / 2
-                top_liq_index               := i
-            else
-                break
-    bot_liq_perc                        := math.round(((bot_liq - bot) / global_distance) * 100)
-    top_liq_perc                        := math.round(((top_liq - bot) / global_distance) * 100)
-    //
-    // -------------------------------------}
     //Percent study
     // -----------------------------------------------------------{
     totalmax                            = array.sum(totalvols) * percent / 100.
@@ -1606,9 +1551,9 @@ if (barstate.isconfirmed and run > 0 ) or (barstate.islastconfirmedhistory) or (
     // Calcola differenza Fibonacci
     first_distance_va := fib_vah_temp - fib_val_temp
     if first_distance_va > 3
-        switch_vah := true, percent -= 5
+        switch_vah := true, percent -= 10
     if first_distance_va < 3
-        switch_vah := true, percent += 5  
+        switch_vah := true, percent += 10  
     // Ricalcola VA se percent è cambiato per ottimizzazione livelli VA iniziali
     if switch_vah
         switch_vah := false
@@ -1875,29 +1820,160 @@ if (barstate.isconfirmed and run > 0 ) or (barstate.islastconfirmedhistory) or (
                          color=color.green,
                          width=poc_width_,
                          style=line.style_dashed, force_overlay = true))
-    var no_vol_boxes = array.new<box>(20)
-    var no_vol_labels = array.new<label>(20)
     
-    // Pulisci precedenti
-    for idx = 0 to 19
-        box.delete(array.get(no_vol_boxes, idx))
-        label.delete(array.get(no_vol_labels, idx))
+    // Elimina la parte dei box e sostituisci con:
     if zone_count_down > 0
         for z = 0 to zone_count_down - 1
             int i_start = array.get(zone_starts_down, z)
             int i_end = array.get(zone_ends_down, z)
             float price_start = array.get(levels, i_start)
-            float price_end = array.get(levels, i_end + 1)         
-            array.set(no_vol_boxes, z, box.new(
-                 bar_index,
+            float price_end = array.get(levels, i_end + 1)
+            
+            // Linea START zona
+            array.unshift(peak_level_perc, i_start)
+            array.unshift(peak_level_ar, price_start)
+            array.unshift(peak_lines, line.new(
+                 bar_index - bbars,
                  price_start,
-                 bar_index + start_offset,
+                 bar_index + 23,
+                 price_start,
+                 color=color.yellow,
+                 width=1,
+                 style=line.style_dashed, 
+                 force_overlay=true))
+            
+            // Linea END zona
+            array.unshift(peak_level_perc, i_end + 1)
+            array.unshift(peak_level_ar, price_end)
+            array.unshift(peak_lines, line.new(
+                 bar_index - bbars,
                  price_end,
-                 bgcolor=color.new(color.yellow, 90),
-                 border_width=1,
-                 border_color= color.new(color.red,100), force_overlay = true))
+                 bar_index + 23,
+                 price_end,
+                 color=color.yellow,
+                 width=1,
+                 style=line.style_dotted,
+                 force_overlay=true))
+    array.sort_indices(peak_level_perc, order.descending)
+    array.sort_indices(peak_level_ar, order.descending)
+            //
+    // -------------------------------------}
+    // Miglioramento delle zone liq in base ai massimi volumetrici
+    // -----------------------------------------------------------{
+    // ========== BOT LIQUIDITÀ ==========
+    float new_bot_liq = bot_liq_shadow
+    int bot_liq_index = 0
 
-        //
+    // Trova indice e cerca volume zero in un unico loop
+    for i = 0 to cnum - 1
+        if array.get(levels, i) <= bot_liq_shadow and (i == cnum - 1 or array.get(levels, i + 1) > bot_liq_shadow)
+            bot_liq_index := i
+            // Cerca volume zero scendendo da qui
+            for j = i to 0
+                if array.get(totalvols, j) == 0
+                    new_bot_liq := array.get(levels, j)
+                    bot_liq_modified := true
+                    bot_liq_index := j
+                    break
+            break
+
+    bot_liq := bot_liq_modified ? new_bot_liq : bot_liq_shadow
+
+    // Cerca picco volume salendo (solo se necessario)
+    int original_bot_index = bot_liq_index
+    float original_bot_liq = bot_liq
+
+    if bot_liq_index < cnum - 1 and bot_liq_index > 0
+        float max_vol = array.get(totalvols, bot_liq_index)
+        for i = bot_liq_index + 1 to cnum - 1
+            float current_vol = array.get(totalvols, i)
+            if current_vol > max_vol
+                max_vol := current_vol
+                bot_liq := (array.get(levels, i) + array.get(levels, i + 1)) / 2
+                bot_liq_index := i
+            else
+                break
+        
+        // Verifica se superiore a fib_perc_1
+        float current_perc = math.round((bot_liq - bot) / global_distance) * 100
+        if current_perc > fib_perc_1
+            // Cerca picco verso il basso partendo dall'indice originale
+            float max_vol_down = array.get(totalvols, original_bot_index)
+            float new_bot_liq_down = original_bot_liq
+            bool found_peak = false
+            
+            if original_bot_index > 0
+                for i = original_bot_index - 1 to 0
+                    float vol = array.get(totalvols, i)
+                    if vol > max_vol_down
+                        max_vol_down := vol
+                        new_bot_liq_down := (array.get(levels, i) + array.get(levels, i + 1)) / 2
+                        found_peak := true
+                    else
+                        break
+            
+            // Usa il picco trovato o mantieni l'originale
+            bot_liq := found_peak ? new_bot_liq_down : original_bot_liq
+
+    // ========== TOP LIQUIDITÀ ==========
+    float new_top_liq = top_liq_shadow
+    int top_liq_index = cnum - 1
+
+    // Trova indice e cerca volume zero in un unico loop
+    for i = 0 to cnum - 1
+        if array.get(levels, i) <= top_liq_shadow and (i == cnum - 1 or array.get(levels, i + 1) > top_liq_shadow)
+            top_liq_index := i
+            // Cerca volume zero salendo da qui
+            for j = i to cnum - 1
+                if array.get(totalvols, j) == 0
+                    new_top_liq := array.get(levels, j)
+                    top_liq_modified := true
+                    top_liq_index := j
+                    break
+            break
+
+    top_liq := top_liq_modified ? new_top_liq : top_liq_shadow
+
+    // Cerca picco volume scendendo (riuso top_liq_index)
+    int original_top_index = top_liq_index
+    float original_top_liq = top_liq
+
+    if top_liq_index > 0
+        float max_vol = array.get(totalvols, top_liq_index)
+        for i = top_liq_index - 1 to 0
+            float current_vol = array.get(totalvols, i)
+            if current_vol > max_vol
+                max_vol := current_vol
+                top_liq := (array.get(levels, i) + array.get(levels, i + 1)) / 2
+            else
+                break
+        
+        // Verifica se inferiore a fib_perc_5
+        float current_perc = math.round((top_liq - bot) / global_distance) * 100
+        if current_perc < fib_perc_5
+            // Cerca picco verso l'alto dall'indice originale
+            float max_vol_up = 0.0
+            float new_top_liq_up = original_top_liq
+            bool found_peak = false
+            
+            if original_top_index < cnum - 1
+                max_vol_up := array.get(totalvols, original_top_index)
+                for i = original_top_index + 1 to cnum - 1
+                    float vol = array.get(totalvols, i)
+                    if vol > max_vol_up
+                        max_vol_up := vol
+                        new_top_liq_up := (array.get(levels, i) + array.get(levels, i + 1)) / 2
+                        found_peak := true
+                    else
+                        break
+            
+            // Usa il picco trovato o mantieni l'originale
+            top_liq := found_peak ? new_top_liq_up : original_top_liq
+
+    // Calcola percentuali
+    bot_liq_perc := math.round(((bot_liq - bot) / global_distance) * 100)
+    top_liq_perc := math.round(((top_liq - bot) / global_distance) * 100)
+    //
     // -------------------------------------}
     // Settaggio finale livelli VA
     // -----------------------------------------------------------{
@@ -2042,6 +2118,9 @@ if (barstate.isconfirmed and run > 0 ) or (barstate.islastconfirmedhistory) or (
                 poc_2_index               := i
                 break
     //
+    if na(poc_second_level)
+        poc_second_level := bot 
+        poc_2_index := 0
     // -------------------------------------}
     // Gestione colorazione poc
     // -----------------------------------------------------------{
@@ -2060,10 +2139,13 @@ if (barstate.isconfirmed and run > 0 ) or (barstate.islastconfirmedhistory) or (
     //
     float poc_2_buy_volume          = array.get(volumes, poc_2_index)
     float poc_2_sell_volume         = array.get(volumes, poc_2_index + cnum)
-    if poc_2_buy_volume >= poc_2_sell_volume // Maggior volume di acquisto
-        poc_2_color := color.blue , poc_2_is_buy := true 
-    else if poc_2_sell_volume > poc_2_buy_volume // Maggior volume di vendita
-        poc_2_color := color.orange, poc_2_is_buy := false
+    if poc_second_level != bot 
+        if poc_2_buy_volume >= poc_2_sell_volume // Maggior volume di acquisto
+            poc_2_color := color.blue , poc_2_is_buy := true 
+        else if poc_2_sell_volume > poc_2_buy_volume // Maggior volume di vendita
+            poc_2_color := color.orange, poc_2_is_buy := false
+    else 
+        poc_2_color := na, poc_2_is_in_buy := true
     //
     // -------------------------------------}
 // -------------------------------------}
@@ -2477,18 +2559,19 @@ save_start_perc := save_start_perc_bool and bot != bot[1] ? math.round(((mid_ask
 //Determino livelli e percentuali del livello di apertura delle posizioni break, viene mantenuto nei cicli per evitare partenze rapide dalla mid quando viene appena triggerata la break
 break_ask_perc := not na(break_ask) ? math.round(((break_ask - bot) / global_distance) * 100) : na 
 //Determino livelli e percentuali del livello di apertura delle posizioni bot
-bot_liq_perc_used = na(first_bot_liq) ? bot_liq_perc : scenario_bot_1_string_start == "scenario_bot" ? math.round(((first_bot_liq - bot) / global_distance) * 100) : math.round(((first_bot - bot) / global_distance) * 100)
+bot_liq_perc_l = not na(scenario_bot_ask_to_l) ? math.round(((scenario_bot_ask_to_l - bot) / global_distance) * 100) : bot_liq_perc
+bot_liq_perc_h = not na(scenario_bot_ask_to_h) ? math.round(((scenario_bot_ask_to_h - bot) / global_distance) * 100) : bot_liq_perc
 //Determino livelli e percentuali del livello di apertura delle posizioni siffredi
 siffredi_ask_perc := not na(siffredi_ask) ? math.round(((siffredi_ask - bot) / global_distance) * 100) : 25 
 //Determino livelli e percentuali del livello di apertura delle posizioni cover, utilizzo un blocco singolo per ogni cover per ottimizzare la computazione 
-cover_1_ask      = not na(scenario_cover_1_ask_to_l) or not na(scenario_cover_1_ask_to_h) ? math.min(scenario_cover_1_ask_to_l, scenario_cover_1_ask_to_h) : na
-cover_1_ask_perc = not na(scenario_cover_1_ask_to_l) or not na(scenario_cover_1_ask_to_h) ? math.round(((cover_1_ask - bot) / global_distance) * 100) : na
-cover_2_ask      = not na(scenario_cover_2_ask_to_l) or not na(scenario_cover_2_ask_to_h) ? math.min(scenario_cover_2_ask_to_l, scenario_cover_2_ask_to_h) : na
-cover_2_ask_perc = not na(scenario_cover_2_ask_to_l) or not na(scenario_cover_2_ask_to_h) ? math.round(((cover_2_ask - bot) / global_distance) * 100) : na
-cover_3_ask      = not na(scenario_cover_3_ask_to_l) or not na(scenario_cover_3_ask_to_h) ? math.min(scenario_cover_3_ask_to_l, scenario_cover_3_ask_to_h) : na
-cover_3_ask_perc = not na(scenario_cover_3_ask_to_l) or not na(scenario_cover_3_ask_to_h) ? math.round(((cover_3_ask - bot) / global_distance) * 100) : na
-cover_4_ask      = not na(scenario_cover_4_ask_to_l) or not na(scenario_cover_4_ask_to_h) ? math.min(scenario_cover_4_ask_to_l, scenario_cover_4_ask_to_h) : na
-cover_4_ask_perc = not na(scenario_cover_4_ask_to_l) or not na(scenario_cover_4_ask_to_h) ? math.round(((cover_4_ask - bot) / global_distance) * 100) : na
+cover_1_ask_perc_L = not na(scenario_cover_1_ask_to_l) ? math.round(((scenario_cover_1_ask_to_l - bot) / global_distance) * 100) : na
+cover_2_ask_perc_L = not na(scenario_cover_2_ask_to_l) ? math.round(((scenario_cover_2_ask_to_l - bot) / global_distance) * 100) : na
+cover_3_ask_perc_L = not na(scenario_cover_3_ask_to_l) ? math.round(((scenario_cover_3_ask_to_l - bot) / global_distance) * 100) : na
+cover_4_ask_perc_L = not na(scenario_cover_4_ask_to_l) ? math.round(((scenario_cover_4_ask_to_l - bot) / global_distance) * 100) : na
+cover_1_ask_perc_H = not na(scenario_cover_1_ask_to_h) ? math.round(((scenario_cover_1_ask_to_h - bot) / global_distance) * 100) : na
+cover_2_ask_perc_H = not na(scenario_cover_2_ask_to_h) ? math.round(((scenario_cover_2_ask_to_h - bot) / global_distance) * 100) : na
+cover_3_ask_perc_H = not na(scenario_cover_3_ask_to_h) ? math.round(((scenario_cover_3_ask_to_h - bot) / global_distance) * 100) : na
+cover_4_ask_perc_H = not na(scenario_cover_4_ask_to_h) ? math.round(((scenario_cover_4_ask_to_h - bot) / global_distance) * 100) : na
 //Livello di simulazione per gestione arrow
 simulato_break = (market_buy_pattern == "Poc Break" or market_buy_pattern == "Poc 2 Break" or market_buy_pattern == "Vah Break") ? true : false
 target_buy_perc := (na(target_buy_perc) or market_buy_pattern == "No Buy Pattern" ) ? old_sup_perc : target_buy_perc
@@ -2510,9 +2593,10 @@ break_higher_target_tupla = M2.get_level_from_perc(break_higher_target_perc_tupl
 siffredi_lower_target_tupla  = M2.get_level_from_perc(siffredi_lower_target_perc_tupla, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
 siffredi_higher_target_tupla = M2.get_level_from_perc(siffredi_higher_target_perc_tupla, old_sup_perc, old_sup, top, bot,old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
 // Target del livello bot liq posizione 1-2
-[lower_target_bot_perc_tupla, higher_target_bot_perc_tupla] = M2.calculate_target_percentages(orig_perc_array, bot_liq_perc_used, sentiment_level, timeframe_level, fib_perc_1, fib_perc_2, fib_perc_3, fib_perc_4, fib_perc_5, fib_perc_6, break_with_res, old_res_perc)
-lower_target_bot_tupla  = M2.get_level_from_perc(lower_target_bot_perc_tupla, old_sup_perc, old_sup, top, bot,  old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
-higher_target_bot_tupla = M2.get_level_from_perc(higher_target_bot_perc_tupla, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+[lower_target_bot_perc_tupla_l, higher_target_bot_perc_tupla_l] = M2.calculate_target_percentages(orig_perc_array, bot_liq_perc_l, sentiment_level, timeframe_level, fib_perc_1, fib_perc_2, fib_perc_3, fib_perc_4, fib_perc_5, fib_perc_6, break_with_res, old_res_perc)
+[lower_target_bot_perc_tupla_h, higher_target_bot_perc_tupla_h] = M2.calculate_target_percentages(orig_perc_array, bot_liq_perc_h, sentiment_level, timeframe_level, fib_perc_1, fib_perc_2, fib_perc_3, fib_perc_4, fib_perc_5, fib_perc_6, break_with_res, old_res_perc)
+lower_target_bot_tupla  = M2.get_level_from_perc(lower_target_bot_perc_tupla_l, old_sup_perc, old_sup, top, bot,  old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+higher_target_bot_tupla = M2.get_level_from_perc(higher_target_bot_perc_tupla_h, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
 // Target per posizione 11 actual over bot 
 [lower_target_act_sup_over_bot_perc_tupla, higher_target_act_sup_over_bot_perc_tupla] = M2.calculate_target_percentages(orig_perc_array, actual_supporto_poc_perc, sentiment_level, timeframe_level, fib_perc_1, fib_perc_2, fib_perc_3, fib_perc_4, fib_perc_5, fib_perc_6, break_with_res, old_res_perc)
 lower_target_act_sup_over_bot_tupla = M2.get_level_from_perc(lower_target_act_sup_over_bot_perc_tupla, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
@@ -2521,21 +2605,25 @@ lower_target_act_sup_over_bot_tupla = M2.get_level_from_perc(lower_target_act_su
 mid_lower_target_tupla  = M2.get_level_from_perc(mid_lower_target_perc_tupla, old_sup_perc, old_sup, top, bot,  old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
 mid_higher_target_tupla = M2.get_level_from_perc(mid_higher_target_perc_tupla, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
 //Target per posizioni Cover 1
-[cover_1_lower_target_perc_tupla, cover_1_higher_target_perc_tupla] = M2.calculate_target_percentages(orig_perc_array, cover_1_ask_perc, sentiment_level, timeframe_level, fib_perc_1, fib_perc_2, fib_perc_3, fib_perc_4, fib_perc_5, fib_perc_6, break_with_res, old_res_perc)
-cover_1_lower_target_tupla  = M2.get_level_from_perc(cover_1_lower_target_perc_tupla, old_sup_perc, old_sup, top, bot,  old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
-cover_1_higher_target_tupla = M2.get_level_from_perc(cover_1_higher_target_perc_tupla, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+[cover_1_lower_target_perc_tupla_L_L, cover_1_higher_target_perc_tupla_L_H] = M2.calculate_target_percentages(orig_perc_array, cover_1_ask_perc_L, sentiment_level, timeframe_level, fib_perc_1, fib_perc_2, fib_perc_3, fib_perc_4, fib_perc_5, fib_perc_6, break_with_res, old_res_perc)
+[cover_1_lower_target_perc_tupla_H_L, cover_1_higher_target_perc_tupla_H_H] = M2.calculate_target_percentages(orig_perc_array, cover_1_ask_perc_H, sentiment_level, timeframe_level, fib_perc_1, fib_perc_2, fib_perc_3, fib_perc_4, fib_perc_5, fib_perc_6, break_with_res, old_res_perc)
+cover_1_lower_target_tupla  = M2.get_level_from_perc(cover_1_lower_target_perc_tupla_L_L, old_sup_perc, old_sup, top, bot,  old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+cover_1_higher_target_tupla = M2.get_level_from_perc(cover_1_higher_target_perc_tupla_H_H, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
 //Target per posizioni Cover 2
-[cover_2_lower_target_perc_tupla, cover_2_higher_target_perc_tupla] = M2.calculate_target_percentages(orig_perc_array, cover_1_ask_perc, sentiment_level, timeframe_level, fib_perc_1, fib_perc_2, fib_perc_3, fib_perc_4, fib_perc_5, fib_perc_6, break_with_res, old_res_perc)
-cover_2_lower_target_tupla  = M2.get_level_from_perc(cover_2_lower_target_perc_tupla, old_sup_perc, old_sup, top, bot,  old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
-cover_2_higher_target_tupla = M2.get_level_from_perc(cover_2_higher_target_perc_tupla, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+[cover_2_lower_target_perc_tupla_L_L, cover_2_higher_target_perc_tupla_L_H] = M2.calculate_target_percentages(orig_perc_array, cover_1_ask_perc_L, sentiment_level, timeframe_level, fib_perc_1, fib_perc_2, fib_perc_3, fib_perc_4, fib_perc_5, fib_perc_6, break_with_res, old_res_perc)
+[cover_2_lower_target_perc_tupla_H_L, cover_2_higher_target_perc_tupla_H_H] = M2.calculate_target_percentages(orig_perc_array, cover_1_ask_perc_H, sentiment_level, timeframe_level, fib_perc_1, fib_perc_2, fib_perc_3, fib_perc_4, fib_perc_5, fib_perc_6, break_with_res, old_res_perc)
+cover_2_lower_target_tupla  = M2.get_level_from_perc(cover_2_lower_target_perc_tupla_L_L, old_sup_perc, old_sup, top, bot,  old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+cover_2_higher_target_tupla = M2.get_level_from_perc(cover_2_higher_target_perc_tupla_H_H, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
 //Target per posizioni Cover 3
-[cover_3_lower_target_perc_tupla, cover_3_higher_target_perc_tupla] = M2.calculate_target_percentages(orig_perc_array, cover_1_ask_perc, sentiment_level, timeframe_level, fib_perc_1, fib_perc_2, fib_perc_3, fib_perc_4, fib_perc_5, fib_perc_6, break_with_res, old_res_perc)
-cover_3_lower_target_tupla  = M2.get_level_from_perc(cover_3_lower_target_perc_tupla, old_sup_perc, old_sup, top, bot,  old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
-cover_3_higher_target_tupla = M2.get_level_from_perc(cover_3_higher_target_perc_tupla, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+[cover_3_lower_target_perc_tupla_L_L, cover_3_higher_target_perc_tupla_L_H]= M2.calculate_target_percentages(orig_perc_array, cover_1_ask_perc_L, sentiment_level, timeframe_level, fib_perc_1, fib_perc_2, fib_perc_3, fib_perc_4, fib_perc_5, fib_perc_6, break_with_res, old_res_perc)
+[cover_3_lower_target_perc_tupla_H_L, cover_3_higher_target_perc_tupla_H_H]= M2.calculate_target_percentages(orig_perc_array, cover_1_ask_perc_H, sentiment_level, timeframe_level, fib_perc_1, fib_perc_2, fib_perc_3, fib_perc_4, fib_perc_5, fib_perc_6, break_with_res, old_res_perc)
+cover_3_lower_target_tupla  = M2.get_level_from_perc(cover_3_lower_target_perc_tupla_L_L, old_sup_perc, old_sup, top, bot,  old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+cover_3_higher_target_tupla = M2.get_level_from_perc(cover_3_higher_target_perc_tupla_H_H, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
 //Target per posizioni Cover 4
-[cover_4_lower_target_perc_tupla, cover_4_higher_target_perc_tupla] = M2.calculate_target_percentages(orig_perc_array, cover_1_ask_perc, sentiment_level, timeframe_level, fib_perc_1, fib_perc_2, fib_perc_3, fib_perc_4, fib_perc_5, fib_perc_6, break_with_res, old_res_perc)
-cover_4_lower_target_tupla  = M2.get_level_from_perc(cover_4_lower_target_perc_tupla, old_sup_perc, old_sup, top, bot,  old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
-cover_4_higher_target_tupla = M2.get_level_from_perc(cover_4_higher_target_perc_tupla, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+[cover_4_lower_target_perc_tupla_L_L, cover_4_higher_target_perc_tupla_L_H] = M2.calculate_target_percentages(orig_perc_array, cover_1_ask_perc_L, sentiment_level, timeframe_level, fib_perc_1, fib_perc_2, fib_perc_3, fib_perc_4, fib_perc_5, fib_perc_6, break_with_res, old_res_perc)
+[cover_4_lower_target_perc_tupla_H_L, cover_4_higher_target_perc_tupla_H_H] = M2.calculate_target_percentages(orig_perc_array, cover_1_ask_perc_H, sentiment_level, timeframe_level, fib_perc_1, fib_perc_2, fib_perc_3, fib_perc_4, fib_perc_5, fib_perc_6, break_with_res, old_res_perc)
+cover_4_lower_target_tupla  = M2.get_level_from_perc(cover_4_lower_target_perc_tupla_L_L, old_sup_perc, old_sup, top, bot,  old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
+cover_4_higher_target_tupla = M2.get_level_from_perc(cover_4_higher_target_perc_tupla_H_H, old_sup_perc, old_sup, top, bot, old_res_perc, old_res, bot_liq_perc, bot_liq, val_perc, val_level, poc_perc, poc_level, vah_perc, vah_level, top_liq_perc, top_liq, poc_2_perc, poc_second_level, actual_support_over_bot_perc, actual_supporto, peak_level_perc, peak_level_ar)
 
 if barstate.isconfirmed and run > 0 
     siffredi_lower_target               := siffredi_lower_target_tupla
@@ -2543,9 +2631,9 @@ if barstate.isconfirmed and run > 0
     siffredi_higher_target              := siffredi_higher_target_tupla
     siffredi_higher_target_perc         := siffredi_higher_target_perc_tupla
     lower_target_bot                    := lower_target_bot_tupla
-    lower_target_bot_perc               := lower_target_bot_perc_tupla
+    lower_target_bot_perc               := lower_target_bot_perc_tupla_l
     higher_target_bot                   := higher_target_bot_tupla
-    higher_target_bot_perc              := higher_target_bot_perc_tupla
+    higher_target_bot_perc              := higher_target_bot_perc_tupla_h
     actual_support_lower                := lower_target_act_sup_over_bot_tupla
     actual_support_lower_perc           := lower_target_act_sup_over_bot_perc_tupla
     mid_lower_target                    := mid_lower_target_tupla
@@ -2553,21 +2641,21 @@ if barstate.isconfirmed and run > 0
     mid_higher_target                   := mid_higher_target_tupla
     mid_higher_target_perc              := mid_higher_target_perc_tupla
     cover_1_lower_target                := cover_1_lower_target_tupla 
-    cover_1_lower_target_perc           := cover_1_lower_target_perc_tupla 
+    cover_1_lower_target_perc           := cover_1_lower_target_perc_tupla_L_L 
     cover_1_higher_target               := cover_1_higher_target_tupla
-    cover_1_higher_target_perc          := cover_1_higher_target_perc_tupla
+    cover_1_higher_target_perc          := cover_1_higher_target_perc_tupla_H_H
     cover_2_lower_target                := cover_2_lower_target_tupla 
-    cover_2_lower_target_perc           := cover_2_lower_target_perc_tupla 
+    cover_2_lower_target_perc           := cover_2_lower_target_perc_tupla_L_L 
     cover_2_higher_target               := cover_2_higher_target_tupla
-    cover_2_higher_target_perc          := cover_2_higher_target_perc_tupla
+    cover_2_higher_target_perc          := cover_2_higher_target_perc_tupla_H_H
     cover_3_lower_target                := cover_3_lower_target_tupla 
-    cover_3_lower_target_perc           := cover_3_lower_target_perc_tupla 
+    cover_3_lower_target_perc           := cover_3_lower_target_perc_tupla_L_L 
     cover_3_higher_target               := cover_3_higher_target_tupla
-    cover_3_higher_target_perc          := cover_3_higher_target_perc_tupla
+    cover_3_higher_target_perc          := cover_3_higher_target_perc_tupla_H_H
     cover_4_lower_target                := cover_4_lower_target_tupla 
-    cover_4_lower_target_perc           := cover_4_lower_target_perc_tupla 
+    cover_4_lower_target_perc           := cover_4_lower_target_perc_tupla_L_L  
     cover_4_higher_target               := cover_4_higher_target_tupla
-    cover_4_higher_target_perc          := cover_4_higher_target_perc_tupla
+    cover_4_higher_target_perc          := cover_4_higher_target_perc_tupla_H_H
     break_lower_target                  := break_lower_target_tupla      
     break_lower_target_perc             := break_lower_target_perc_tupla            
     break_higher_target                 := break_higher_target_tupla            
@@ -2615,4 +2703,3 @@ run := run_result == 1 and barstate.isconfirmed ? run + 1 : run
 M2.tabella_completa(percent_change, real_pearson, costituzione_volume , market, market_buy_pattern, diff_percentage, bot, top, bot_is_sup, top_is_res,tot_sup, tot_res, titolo, spread, status_vix, headerColor, positiveColor, negativeColor, volume_ratio, spike_ratio, body_ratio,bbars, status_sdex)
 M2.drawArrowsAndTable(simulato_level, simulato_lower_target_tupla, simulato_higher_target_tupla, sentiment_level, market_buy_pattern, old_sup)
 // -------------------------------------}
-
