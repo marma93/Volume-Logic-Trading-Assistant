@@ -216,7 +216,7 @@ export getStatus(float vix, float sdex) =>
 //Ancoraggio iniziale @@@@@@@@@ attualmente non utilizzata, crea errori a mercato chiuso - da verificare con mercato aperto anche se mi pareva andasse bene
 export checkPivotSwitch(int contatore, int tot_position, int run, bool bar_reach, bool block_start_bar, bool ancoraggio_pivot, 
                        int support_switch_bar, int res_switch_bar, int support_switch_bar_old, 
-                       int res_switch_bar_old, int original_bbars, int bar_limit, float actual_supporto, 
+                       int res_switch_bar_old, int original_bbars, int bar_limit, float actual_supporto, float actual_supporto_old,
                        float bot, int bbars, float media_vol, bool bot_block, bool top_block, 
                        bool bot_block_fast, bool top_block_fast) =>
     // Variabili locali
@@ -238,11 +238,15 @@ export checkPivotSwitch(int contatore, int tot_position, int run, bool bar_reach
             contatore_try := bar_index - original_bbars - support_switch_bar
             top_mom := 0
             bot_mom := 9999999
+            no_sup = false
             for i = 1 to (bbars + contatore_try)
                 top_mom := high[i] > top_mom ? high[i] : top_mom
                 bot_mom := low[i] < bot_mom ? low[i] : bot_mom
+            for i = 1 to (bbars + contatore_try)
+                if low[i] < actual_supporto
+                    no_sup := true
             actual_media_vol := top_mom - bot_mom
-            if actual_media_vol > media_vol
+            if actual_media_vol > media_vol and not no_sup
                 _contatore := bar_index - original_bbars - support_switch_bar
                 _block_start_bar := true
                 _bot_block_fast := true
@@ -266,11 +270,15 @@ export checkPivotSwitch(int contatore, int tot_position, int run, bool bar_reach
             contatore_try := bar_index - original_bbars - support_switch_bar_old
             top_mom := 0
             bot_mom := 9999999
+            no_sup_2 = false
             for i = 1 to (bbars + contatore_try)
                 top_mom := high[i] > top_mom ? high[i] : top_mom
                 bot_mom := low[i] < bot_mom ? low[i] : bot_mom
+            for i = 1 to (bbars + contatore_try)
+                if low[i] < actual_supporto_old
+                    no_sup_2 := true
             actual_media_vol := top_mom - bot_mom
-            if actual_media_vol > media_vol
+            if actual_media_vol > media_vol and not no_sup_2
                 _contatore := bar_index - original_bbars - support_switch_bar_old
                 _block_start_bar := true
                 _bot_block := true
@@ -543,7 +551,7 @@ export plotlineSystem(int run, int bbars, float poc_level, float poc_second_leve
                   float old_res_2, float old_sup_2, float old_res_3, float old_sup_3,
                   color poc_color, color poc_2_color, color negativeColor, color positiveColor,
                   int poc_width, int val_width, int ext_width, bool bot_is_sup) =>
-    if run > 0
+    if (barstate.isconfirmed and run > 0) or barstate.islastconfirmedhistory
         var line poc_line         = na
         var line poc_2_line       = na
         var line top_line         = na
@@ -602,7 +610,7 @@ export plotlineSystem(int run, int bbars, float poc_level, float poc_second_leve
 //
 //Plot istogramma volume
 export drawVolumeHistogram(int run, float top, float bot, int cnum, array<float> volumes, array<box> vol_bars, array<float> levels, int down, int up) =>
-    if (barstate.isconfirmed and run > 0) or (run == 0 and barstate.islastconfirmedhistory)
+    if (barstate.isconfirmed and run > 0) or (barstate.islastconfirmedhistory)
         var color vup_color = color.new(color.green, 60)                   
         var color vdown_color = color.new(color.red, 60)
         var color up_color = color.new(color.green, 70)       // Colore up standard
@@ -1237,7 +1245,7 @@ export drawArrowsAndTable(float simulato_level, float simulato_lower_target_tupl
     var line arrow_to_entry = na
     var line arrow_to_target1 = na
     var line arrow_to_target2 = na
-    if barstate.isconfirmed
+    if barstate.isconfirmed or barstate.islastconfirmedhistory
         // Cancella le frecce precedenti
         line.delete(arrow_to_entry)
         line.delete(arrow_to_target1)
