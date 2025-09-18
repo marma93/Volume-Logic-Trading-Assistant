@@ -12,7 +12,7 @@ indicator('Volume Logic Trading Assistant (Buy)', max_bars_back = 5000,max_boxes
 
 // Var & Library 
 // -----------------------------------------------------------{
-import MPELAM/Logic_Trade_Bot_Library_BUY/5 as M2  
+import MPELAM/Logic_Trade_Bot_Library_BUY/10 as M2  
     // TIMEFRAME E ANALISI TEMPORALE
 // ═══════════════════════════════════════════════════════════════════════════════════════{
 var string current_timeframe = timeframe.period
@@ -35,7 +35,7 @@ var int contatore = 0            // Contatore barre aggiuntive per ancorare il g
 var int cnum = 100               // Numero canali volume profilo
 var int original_bbars_old = original_bbars - 1 // Backup bbars precedente
 var float incremento_resistenze_pivot = 1.1     // Moltiplicatore distanza resistenze
-var float min_0_3 = timeframe_level <= 1 ? close / 100 * 0.66 : timeframe_level <= 3 ? close /100 : close / 100 * 2 // Distanza minima posizioni cover
+var float min_0_3 = timeframe_level <= 1 ? close / 100 * 0.2 : timeframe_level <= 3 ? close /100 * 0.66 : close / 100 * 1 // Distanza minima posizioni cover
 var int counting = 0 // Iterazione di inizializzazione
 var int first_distance_va = 0    // Distanza di Fibonacci tra le fasce VA
 var string regime = na           // Indica il regime di mercato CMF
@@ -455,7 +455,7 @@ sdex = request.security("SDEX", current_timeframe, close)
 // Assegnazione valori in base allo status_vix
 var int sentiment_level = 0
 [sentiment_level_, incremento_distanza_pivot] = M2.valori_status(status_vix, status_sdex, score, timeframe_level)
-sentiment_level := sentiment_level_
+sentiment_level := sentiment_level_ - open_position_break - open_position_mid
 // Colore basato sullo stato
 col = status_vix == "PANICO" or status_vix == "CRITICO" ? color.red : status_vix == "ALTO" or status_vix == "ELEVATO" ? color.orange : status_vix == "NORMALE" or status_vix == "BASSO" ? color.yellow : color.green
 // ----------------------------------------}
@@ -564,7 +564,7 @@ if barstate.islastconfirmedhistory
 
 [_contatore, _block_start_bar, _bot_block_fast, _top_block_fast, _bot_block, _top_block] = M2.checkPivotSwitch(contatore, tot_position, run, bar_reach, block_start_bar, ancoraggio_pivot, 
                        support_switch_bar, res_switch_bar, support_switch_bar_old, 
-                       res_switch_bar_old, original_bbars, bar_limit, actual_supporto, 
+                       res_switch_bar_old, original_bbars, bar_limit, actual_supporto, actual_old_supporto,
                        bot, bbars, media_vol, bot_block, top_block, 
                        bot_block_fast, top_block_fast)
 //
@@ -2161,6 +2161,8 @@ if (barstate.isconfirmed and run > 0 ) or (barstate.islastconfirmedhistory) or (
     array.push(exclude_indices, up)      
     array.push(exclude_indices, poc)
     array.push(exclude_indices, poc_2_index) 
+    array.push(exclude_indices, 0) 
+    array.push(exclude_indices, cnum) 
 
     // Rimuovi picchi con indici da escludere
     if array.size(peak_level_perc) > 0
